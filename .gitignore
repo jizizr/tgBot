@@ -1,0 +1,13 @@
+config/
+
+test/
+
+*.log
+
+bot
+
+*.pem
+
+.vscode
+
+source/font3.ttf
