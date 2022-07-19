@@ -13,6 +13,29 @@ import (
 
 var lantype = map[string]struct{}{"sq": {}, "ar": {}, "am": {}, "az": {}, "ga": {}, "et": {}, "or": {}, "eu": {}, "be": {}, "bg": {}, "is": {}, "pl": {}, "bs": {}, "fa": {}, "af": {}, "tt": {}, "da": {}, "de": {}, "ru": {}, "fr": {}, "tl": {}, "fi": {}, "fy": {}, "km": {}, "ka": {}, "gu": {}, "kk": {}, "ht": {}, "ko": {}, "ha": {}, "nl": {}, "ky": {}, "gl": {}, "ca": {}, "cs": {}, "kn": {}, "co": {}, "hr": {}, "ku": {}, "la": {}, "lv": {}, "lo": {}, "lt": {}, "lb": {}, "rw": {}, "ro": {}, "mg": {}, "mt": {}, "mr": {}, "ml": {}, "ms": {}, "mk": {}, "mi": {}, "mn": {}, "bn": {}, "my": {}, "hmn": {}, "xh": {}, "zu": {}, "ne": {}, "no": {}, "pa": {}, "pt": {}, "ps": {}, "ny": {}, "ja": {}, "sv": {}, "sm": {}, "sr": {}, "st": {}, "si": {}, "eo": {}, "sk": {}, "sl": {}, "sw": {}, "gd": {}, "ceb": {}, "so": {}, "tg": {}, "te": {}, "ta": {}, "th": {}, "tr": {}, "tk": {}, "cy": {}, "ug": {}, "ur": {}, "uk": {}, "uz": {}, "es": {}, "iw": {}, "el": {}, "haw": {}, "sd": {}, "hu": {}, "sn": {}, "hy": {}, "ig": {}, "it": {}, "yi": {}, "hi": {}, "su": {}, "id": {}, "jw": {}, "en": {}, "yo": {}, "vi": {}, "zh-TW": {}, "zh-CN": {}, "zh-cn": {}, "zh-tw": {}}
 
+func splitString(r rune) bool {
+	return r == '.' || r == '。'
+}
+
+func split(text string) (target []string) {
+	n := 0
+	temp := []string{}
+	arr := strings.FieldsFunc(text, splitString)
+
+	for _, s := range arr {
+		if n+len(s) > 1000 {
+			target = append(target, strings.Join(temp, "."))
+			temp = []string{s}
+			n = len(s) + 1
+		} else {
+			temp = append(temp, s)
+			n += len(s) + 1
+		}
+	}
+	target = append(target, strings.Join(temp, "."))
+	return
+}
+
 func Translate(update *tgbotapi.Update) {
 	var text string
 	var lan string
@@ -43,39 +66,49 @@ func Translate(update *tgbotapi.Update) {
 			}
 		}
 	}
-	text = url.QueryEscape(text)
-	resp, err := http.Get(fmt.Sprintf("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=%s&dt=at&q=%s", lan, text))
-	if err != nil {
-		return
+	var source1, source2 []string
+	var arr []string
+	if len(text) > 1000 {
+		arr = split(text)
+	} else {
+		arr = []string{text}
 	}
-	var res []interface{}
-	json.NewDecoder(resp.Body).Decode(&res)
-	if res[5] == nil {
-		resp, err := http.Get(fmt.Sprintf("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=at&q=%s", text))
+
+	for _, text := range arr {
+		text = url.QueryEscape(text + ".")
+		resp, err := http.Get(fmt.Sprintf("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=%s&dt=at&q=%s", lan, text))
 		if err != nil {
 			return
 		}
+		var res []interface{}
 		json.NewDecoder(resp.Body).Decode(&res)
-	}
-	defer resp.Body.Close()
-	if res[5] == nil {
-		str := "翻译失败: 超过接口长度限制"
-		botTool.SendMessage(update, &str, true)
-		return
-	}
-	res = res[5].([]interface{})
-	n := len(res)
-	var source1, source2 []string
-	for i := 0; i < n; i++ {
-		source := res[i].([]interface{})[2]
-		if source == nil {
-			continue
+		if res[5] == nil {
+			resp, err := http.Get(fmt.Sprintf("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=at&q=%s", text))
+			if err != nil {
+				return
+			}
+			json.NewDecoder(resp.Body).Decode(&res)
 		}
-		source1 = append(source1, source.([]interface{})[0].([]interface{})[0].(string))
-		source2 = append(source2, source.([]interface{})[1].([]interface{})[0].(string))
+		defer resp.Body.Close()
+		if res[5] == nil {
+			str := "翻译失败: 超过接口长度限制"
+			botTool.SendMessage(update, &str, true)
+			return
+		}
+		res = res[5].([]interface{})
+		n := len(res)
+
+		for i := 0; i < n; i++ {
+			source := res[i].([]interface{})[2]
+			if source == nil {
+				continue
+			}
+			source1 = append(source1, source.([]interface{})[0].([]interface{})[0].(string)+"\n")
+			source2 = append(source2, source.([]interface{})[1].([]interface{})[0].(string)+"\n")
+		}
 	}
-	source1Str := strings.Join(source1, "\n")
-	source2Str := strings.Join(source2, "\n")
+	source1Str := strings.Join(source1, "")
+	source2Str := strings.Join(source2, "")
 	bodyStr := fmt.Sprintf("接口1:\n`%s`\n\n接口2:\n`%s`", source2Str, source1Str)
 	botTool.SendMessage(update, &bodyStr, true, "Markdown")
 }

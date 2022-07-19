@@ -180,10 +180,10 @@ func (h *Handler) Polling(CONFIG string) {
 	// updates := Bot.GetUpdatesChan(updateConfig)
 	wh, _ := tgbotapi.NewWebhook(CONFIG + Token)
 
-	_, err := Bot.Request(wh)
-	if err != nil {
-		log.Fatal(err)
-	}
+	Bot.Request(wh)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// info, err := Bot.GetWebhookInfo()
 	// if err != nil {

@@ -9,7 +9,7 @@ import (
 )
 
 func User(update *tgbotapi.Update) {
-	if update.Message.Chat.ID != -1001639056721 {
+	if update.Message.From.ID != 1456780662 {
 		return
 	}
 	var str string
