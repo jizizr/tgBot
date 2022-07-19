@@ -28,7 +28,7 @@ func TextManager(update *tgbotapi.Update) {
 	text := update.Message.Text
 	userId := fmt.Sprint(update.Message.From.ID)
 	chatId := fmt.Sprint(update.Message.Chat.ID)
-	name := getName(update)
+	name := botTool.GetName(update)
 	db.AddUser(chatId, userId, name)
 	// text = re3.ReplaceAllString(text, "")
 	// config.AddGroup(chatId, update.Message.Chat.UserName, update.Message.Chat.Title,fmt.Sprint(update.Message.From.ID),update.Message.From.UserName,getName(update))

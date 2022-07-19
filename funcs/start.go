@@ -12,7 +12,7 @@ func Start(update *tgbotapi.Update) {
 	if update.Message.From.ID == 1456780662 {
 		str = "主人好！"
 	} else {
-		str = fmt.Sprintf("你好 %s ,实现完整功能,请给我读取消息权限", getName(update))
+		str = fmt.Sprintf("你好 %s ,实现完整功能,请给我读取消息权限", botTool.GetName(update))
 	}
 	botTool.SendMessage(update, &str, true)
 }

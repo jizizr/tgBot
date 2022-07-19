@@ -17,23 +17,11 @@ import (
 
 var config = dbManager.InitMysql("config", CONFIG_TOKEN, "config")
 
-func getName(update *tgbotapi.Update) (name string) {
-	user := update.Message.From
-	name = user.FirstName + " " + user.LastName
-	if name != " " {
-		return
-	}
-	name = user.UserName
-	if name != "" {
-		return
-	}
-	name = string(rune(user.ID))
-	return
-}
+
 
 func GetMessgae(update *tgbotapi.Update) {
 	if update.Message!=nil {
-	config.AddGroup(fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, getName(update))
+	config.AddGroup(fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
 	}
 }
 
