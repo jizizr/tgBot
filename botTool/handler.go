@@ -3,6 +3,7 @@ package botTool
 import (
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -64,7 +65,7 @@ func (h *CommandHandler) match(update *tgbotapi.Update) {
 	arr := strings.Split(data, "@")
 	if len(arr) == 2 {
 		arr1 := strings.Split(arr[1], " ")
-		if arr1[0] != "jizizr_bot" {
+		if arr1[0] != Bot.Self.UserName {
 			return
 		}
 	} else {
@@ -175,27 +176,33 @@ func (h *Handler) HandleFunc(command string, callback HandleFunc, msg ...string)
 
 func (h *Handler) Polling(CONFIG string) {
 	Bot.Debug = false
-	// updateConfig := tgbotapi.NewUpdate(0)
-	// updateConfig.Timeout = 60
-	// updates := Bot.GetUpdatesChan(updateConfig)
-	wh, _ := tgbotapi.NewWebhook(CONFIG + Token)
+	var updates tgbotapi.UpdatesChannel
+	if len(os.Args) > 1 {
+		updateConfig := tgbotapi.NewUpdate(0)
+		updateConfig.Timeout = 60
+		updates = Bot.GetUpdatesChan(updateConfig)
+	} else {
 
-	Bot.Request(wh)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+		wh, _ := tgbotapi.NewWebhook(CONFIG + Token)
 
-	// info, err := Bot.GetWebhookInfo()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+		Bot.Request(wh)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 
-	// if info.LastErrorDate != 0 {
-	// 	log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
-	// }
+		// info, err := Bot.GetWebhookInfo()
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 
-	updates := Bot.ListenForWebhook("/" + Token)
-	go http.ListenAndServeTLS("0.0.0.0:8443", "cert.pem", "key.pem", nil)
+		// if info.LastErrorDate != 0 {
+		// 	log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
+		// }
+
+		updates = Bot.ListenForWebhook("/" + Token)
+		go http.ListenAndServeTLS("0.0.0.0:8443", "cert.pem", "key.pem", nil)
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println(err)
