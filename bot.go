@@ -6,8 +6,9 @@ import (
 
 	"fmt"
 
-	"os"
 	. "bot/config"
+	"os"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/robfig/cron"
 )
@@ -57,7 +58,8 @@ func main() {
 	h.HandleFunc("/tp", Ping, "测试连通性")
 	h.HandleFunc("/user", User)
 	h.HandleFunc("/music", Music, "搜索音乐")
-//	h.HandleFunc("/html", Html, "Html To Pic")
+	h.HandleFunc("/ban", Ban, "")
+	//	h.HandleFunc("/html", Html, "Html To Pic")
 	h.HandleFunc("^(一言|morning|早上好){1}$", Quote)
 	h.HandleFunc(`^[\s\S]*(\(|[|{|<|（|《|【|（|［|｛|＜|『|「|«|\)|]|}|>|）|》|】|］|）|｝|＞|』|」|»)$`, Fix)
 	h.HandleFunc("", TextManager)
