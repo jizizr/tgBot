@@ -23,7 +23,7 @@ func init() {
 	}
 }
 
-// var KEY string = "5038104220:AAFjRMEJhNNZf17fSDA2E-jx2BnwWZEFlTs"
+
 
 var h *botTool.Handler
 
