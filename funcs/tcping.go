@@ -2,10 +2,11 @@ package funcs
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"fmt"
 	"strings"
 	"sync"
-	. "bot/config"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -14,7 +15,10 @@ func Ping(update *tgbotapi.Update) {
 	var ip, port string
 	msg, _ := botTool.SendMessage(update, &str, true)
 	arr := strings.Split(update.Message.Text, " ")
-	if len(arr) != 3 {
+	if len(arr) == 2 {
+		ip = arr[1]
+		port = "80"
+	} else if len(arr) != 3 {
 		str = "请输入正确的格式，例如：/tp [ip] [port]"
 		botTool.Edit(msg, &str)
 		return
