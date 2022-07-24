@@ -18,8 +18,8 @@ func Weather(update *tgbotapi.Update) {
 		botTool.Bot.Send(replyMsg)
 		return
 	}
-	l := arr[1]
-	tmp := getToMap(fmt.Sprintf("https://geoapi.qweather.com/v2/city/lookup?location=%s&key=%s",WEATHER_TOKEN, url.QueryEscape(l)))["location"]
+	l := strings.Join(arr[1:], " ")
+	tmp := getToMap(fmt.Sprintf("https://geoapi.qweather.com/v2/city/lookup?location=%s&key=%s", url.QueryEscape(l),WEATHER_TOKEN))["location"]
 	if tmp == nil {
 		str := "未找到此地点"
 		botTool.SendMessage(update, &str, true)
@@ -31,7 +31,7 @@ func Weather(update *tgbotapi.Update) {
 	adm2 := location["adm2"].(string)
 	name := location["name"].(string)
 	l = location["id"].(string)
-	res := getToMap(fmt.Sprintf("https://devapi.qweather.com/v7/weather/now?location=%s&key=%s",WEATHER_TOKEN, l))
+	res := getToMap(fmt.Sprintf("https://devapi.qweather.com/v7/weather/now?location=%s&key=%s", l,WEATHER_TOKEN))
 	time := res["updateTime"]
 	link := res["fxLink"]
 	res = res["now"].(map[string]interface{})
