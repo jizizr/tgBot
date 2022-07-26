@@ -53,6 +53,13 @@ func TextManager(update *tgbotapi.Update) {
 func getPic(chatId string) {
 	chatId2 := fmt.Sprintf("%sGroup", chatId)
 	result := db.GetAllWords(&chatId2)
+	if result == nil {
+		str := "群里太冷清了,或Allen没有读取消息权限."
+		cId, _ := strconv.ParseInt(chatId, 10, 64)
+		msg := tgbotapi.NewMessage(cId, str)
+		botTool.Bot.Send(msg)
+		return
+	}
 	botTool.SendPhoto(chatId, group.Rank(result))
 }
 
