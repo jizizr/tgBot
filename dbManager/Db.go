@@ -185,8 +185,8 @@ func (db *database) AddGroup(chatId string, name string, groupname string, user 
 			if err != nil {
 				log.Println(err, name)
 			}
-		}else{
-			log.Println("user:",user)
+		} else {
+			log.Println("user:", user)
 		}
 	}
 	_, err = result.RowsAffected()
@@ -204,7 +204,10 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 	strSql := fmt.Sprintf("select groupData,times from `%s`", *chatId)
 	rows, err := db.db.Query(strSql)
 	if err != nil {
-		log.Println(err)
+		driverErr, _ := err.(*mysql.MySQLError)
+		if driverErr.Number != 1146 {
+			log.Println(err)
+		}
 		return
 	}
 	result = make(map[string]int)
@@ -271,24 +274,3 @@ func (db *database) Clear() {
 		}
 	}
 }
-
-// func main() {
-// 	err := initMysql()
-// 	if err != nil {
-// 		return
-// 	}
-// 	// sqlStr := "INSERT INTO `1`(`id`,`name`) VALUES(?,?)"
-// 	sqlStr := "CREATE TABLE `test` (`id` INT)"
-// 	result, err := db.Exec(sqlStr)
-// 	// result, err := db.Exec(sqlStr, 2, "dfhih")
-// 	if err != nil {
-// 		log.Println(1,err)
-// 		return
-// 	}
-// 	// id, err := result.LastInsertId()
-// 	id, err := result.RowsAffected()
-// 	if err != nil {
-// 		log.Println(2,err)
-// 	}
-// 	log.Println(id)
-// }
