@@ -1,3 +1,7 @@
+//This is a function to handle the message
+//and to judge the message is a command or not
+//Then decide to call the right function
+
 package botTool
 
 import (
@@ -16,22 +20,21 @@ import (
 var Bot *tgbotapi.BotAPI
 var Token string
 
-type Updates struct {
-	*tgbotapi.Update
-}
-
+//HandleFunc is a type which is users must implement for a text or a command
 type HandleFunc func(*tgbotapi.Update)
 
 type IHandler interface {
 	match(*tgbotapi.Update)
 }
 
+//A type to handle the command
 type CommandHandler struct {
 	funcs       map[string]HandleFunc
 	Msgs        map[string]string
 	defultFuncs []HandleFunc
 }
 
+//To call the function
 func (c *CommandHandler) call(name string, update *tgbotapi.Update) {
 	f, ok := c.funcs[name]
 	if !ok {
@@ -77,6 +80,7 @@ func (h *CommandHandler) match(update *tgbotapi.Update) {
 	}
 }
 
+//To call handle function which must be handled when any message is received
 func (t *CommandHandler) defultHandle(callback HandleFunc) {
 	if reflect.ValueOf(callback).Type().NumIn() != 1 {
 		panic("too less value!")
@@ -84,11 +88,13 @@ func (t *CommandHandler) defultHandle(callback HandleFunc) {
 	t.defultFuncs = append(t.defultFuncs, safe(callback))
 }
 
+//textHandler Regexp pattern matching
 type matchPair struct {
 	key *regexp.Regexp
 	fn  HandleFunc
 }
 
+//To handle the Text
 type TextHandler struct {
 	funcs       []*matchPair
 	defultFuncs []HandleFunc
@@ -143,6 +149,7 @@ func NewTextHandler() *TextHandler {
 	}
 }
 
+//Init Bot
 func Init(KEY string) (err error) {
 	Bot, err = tgbotapi.NewBotAPI(KEY)
 	Token = KEY
@@ -160,6 +167,11 @@ func NewHandler() *Handler {
 	return &Handler{CommandHandler: c, TextHandler: t}
 }
 
+//Provide a function to automatically add function to the handler
+//if first character is / it will add to commmandHandler
+//otherwise add to textHandler
+//if it is a blank it will be a TextHandler.defultHandler
+//if it is a / only it will be a CommandHandler.defultHandler
 func (h *Handler) HandleFunc(command string, callback HandleFunc, msg ...string) {
 	if command == "" {
 		h.TextHandler.defultHandle(callback)
@@ -174,6 +186,7 @@ func (h *Handler) HandleFunc(command string, callback HandleFunc, msg ...string)
 	}
 }
 
+//Polling to get the message
 func (h *Handler) Polling(CONFIG string) {
 	Bot.Debug = false
 	var updates tgbotapi.UpdatesChannel
@@ -225,6 +238,7 @@ func (h *Handler) Polling(CONFIG string) {
 	}
 }
 
+//wrapped function to make sure the function is safes
 func safe(f HandleFunc) HandleFunc {
 	return func(update *tgbotapi.Update) {
 		defer func() {
