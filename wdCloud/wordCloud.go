@@ -40,14 +40,14 @@ func init() {
 	}
 	oarr = []wordclouds.Option{
 		wordclouds.FontFile("source/font.ttf"),
-		wordclouds.FontMaxSize(125),
+		wordclouds.FontMaxSize(100),
 		wordclouds.FontMinSize(10),
 		wordclouds.Colors(colors),
 		wordclouds.MaskBoxes(boxes),
 		wordclouds.Height(600),
 		wordclouds.Width(600),
 		wordclouds.RandomPlacement(false),
-		// wordclouds.WordSizeFunction("sqrtinverse"),
+		wordclouds.WordSizeFunction("linear"),
 	}
 }
 
