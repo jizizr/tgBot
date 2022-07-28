@@ -27,7 +27,7 @@ func Ban(update *tgbotapi.Update) {
 		return
 	}
 
-	str := "[" + botTool.GetReplyName(update) + "](tg://user?id=" + fmt.Sprint(update.Message.ReplyToMessage.From.ID) + ") 已禁言" + fmt.Sprint(sec) + "秒"
+	str := fmt.Sprintf("%s 已被禁言 %d 秒", getReplyAt(update), sec)
 	botTool.SendMessage(update, &str, true, "Markdown")
 }
 

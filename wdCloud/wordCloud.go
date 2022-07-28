@@ -31,11 +31,23 @@ var boxes = wordclouds.Mask(
 		A: 0,
 	})
 
+var oarr []wordclouds.Option
 var colors = make([]color.Color, 0)
 
 func init() {
 	for _, c := range DefaultColors {
 		colors = append(colors, c)
+	}
+	oarr = []wordclouds.Option{
+		wordclouds.FontFile("source/font.ttf"),
+		wordclouds.FontMaxSize(125),
+		wordclouds.FontMinSize(10),
+		wordclouds.Colors(colors),
+		wordclouds.MaskBoxes(boxes),
+		wordclouds.Height(600),
+		wordclouds.Width(600),
+		wordclouds.RandomPlacement(false),
+		// wordclouds.WordSizeFunction("sqrtinverse"),
 	}
 }
 
@@ -48,14 +60,7 @@ func Rank(inputWords map[string]int) []byte {
 
 	// start := time.Now()
 	w := wordclouds.NewWordcloud(inputWords,
-		wordclouds.FontFile("source/font.ttf"),
-		wordclouds.FontMaxSize(125),
-		wordclouds.FontMinSize(10),
-		wordclouds.Colors(colors),
-		wordclouds.MaskBoxes(boxes),
-		wordclouds.Height(600),
-		wordclouds.Width(600),
-		wordclouds.RandomPlacement(false))
+		oarr...)
 
 	// outputFile, _ := os.Create("test.png")
 	buf := new(bytes.Buffer)

@@ -10,7 +10,7 @@ import (
 )
 
 type database struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func InitMysql(user, token, table string) (db *database) {
@@ -30,7 +30,7 @@ func InitMysql(user, token, table string) (db *database) {
 
 func (db *database) CreateUserTable(userId string) {
 	sqlStr := fmt.Sprintf("CREATE TABLE `%s` (userId CHAR(16) UNIQUE,times SMALLINT,name CHAR(80)) CHARSET=utf8mb4", userId)
-	result, err := db.db.Exec(sqlStr)
+	result, err := db.Db.Exec(sqlStr)
 	if err != nil {
 		log.Printf("%s when Exec Database in User", err)
 		return
@@ -43,7 +43,7 @@ func (db *database) CreateUserTable(userId string) {
 
 func (db *database) CreateUserConfig(userId string) {
 	sqlStr := fmt.Sprintf("CREATE TABLE `%s` (userId CHAR(16) UNIQUE,time datetime) CHARSET=utf8mb4", userId)
-	result, err := db.db.Exec(sqlStr)
+	result, err := db.Db.Exec(sqlStr)
 	if err != nil {
 		log.Printf("%s when Exec Database in User", err)
 		return
@@ -56,7 +56,7 @@ func (db *database) CreateUserConfig(userId string) {
 
 func (db *database) CreateChatTable(chatId string) {
 	sqlStr := fmt.Sprintf("CREATE TABLE `%s`(groupData CHAR(30) UNIQUE,times SMALLINT) CHARSET=utf8mb4", chatId)
-	result, err := db.db.Exec(sqlStr)
+	result, err := db.Db.Exec(sqlStr)
 	if err != nil {
 		log.Printf("%s when Exec Database in Chat", err)
 		return
@@ -70,7 +70,7 @@ func (db *database) CreateChatTable(chatId string) {
 func (db *database) TableInfo(groups *[]string) {
 	sqlStr := `show tables`
 	var data string
-	rows, err := db.db.Query(sqlStr)
+	rows, err := db.Db.Query(sqlStr)
 	if err != nil {
 		log.Println(err)
 		return
@@ -95,12 +95,12 @@ func (db *database) AddMessage(chatId string, message string) {
 	}()
 	chatId = chatId + "Group"
 	sqlStr := fmt.Sprintf("insert into `%s` (groupData,times) values(?,1) on DUPLICATE key update times=times+1", chatId)
-	result, err := db.db.Exec(sqlStr, message)
+	result, err := db.Db.Exec(sqlStr, message)
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
 		if driverErr.Number == 1146 {
 			db.CreateChatTable(chatId)
-			result, err = db.db.Exec(sqlStr, message)
+			result, err = db.Db.Exec(sqlStr, message)
 			if err != nil {
 				log.Println(err)
 			}
@@ -122,13 +122,13 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 	}()
 	chatId = chatId + "User"
 	sqlStr := fmt.Sprintf("insert into `%s` (userId,times,name) values(?,1,?) on DUPLICATE key update times=times+1", chatId)
-	result, err := db.db.Exec(sqlStr, userId, name)
+	result, err := db.Db.Exec(sqlStr, userId, name)
 	// log.Println(sqlStr)
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
 		if driverErr.Number == 1146 {
 			db.CreateUserTable(chatId)
-			result, err = db.db.Exec(sqlStr, userId, name)
+			result, err = db.Db.Exec(sqlStr, userId, name)
 			if err != nil {
 				log.Println(err, name)
 			}
@@ -150,7 +150,7 @@ func (db *database) AddGroup(chatId string, name string, groupname string, user 
 	}()
 	sqlStr := "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
 
-	result, _ := db.db.Exec(sqlStr, user, username, nickname, username, nickname)
+	result, _ := db.Db.Exec(sqlStr, user, username, nickname, username, nickname)
 	_, err := result.RowsAffected()
 	// log.Println(sqlStr)
 	if err != nil {
@@ -160,7 +160,7 @@ func (db *database) AddGroup(chatId string, name string, groupname string, user 
 		err = nil
 	}
 	sqlStr = "INSERT INTO `config`(`chatId`,`username`, `groupname`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`=?,`groupname`=?"
-	result, err = db.db.Exec(sqlStr, chatId, name, groupname, name, groupname)
+	result, err = db.Db.Exec(sqlStr, chatId, name, groupname, name, groupname)
 	// log.Println(sqlStr)
 	if err != nil {
 		log.Println(err)
@@ -175,13 +175,13 @@ func (db *database) AddGroup(chatId string, name string, groupname string, user 
 		log.Printf("%s when RowsAffected in config", err)
 	}
 	sqlStr = fmt.Sprintf("insert into `%s` (`userId`,`time`) values(?,Now()) ON DUPLICATE KEY UPDATE `time`=Now()", chatId)
-	result, err = db.db.Exec(sqlStr, user)
+	result, err = db.Db.Exec(sqlStr, user)
 	// log.Println(sqlStr)
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
 		if driverErr.Number == 1146 {
 			db.CreateUserConfig(chatId)
-			result, err = db.db.Exec(sqlStr, user)
+			result, err = db.Db.Exec(sqlStr, user)
 			if err != nil {
 				log.Println(err, name)
 			}
@@ -202,7 +202,7 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 		}
 	}()
 	strSql := fmt.Sprintf("select groupData,times from `%s`", *chatId)
-	rows, err := db.db.Query(strSql)
+	rows, err := db.Db.Query(strSql)
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
 		if driverErr.Number != 1146 {
@@ -228,7 +228,7 @@ func (db *database) GetAllUsers(chatId *string) (result [2][]string) {
 		}
 	}()
 	strSql := fmt.Sprintf("select times,name from `%sUser` order by times desc limit 5", *chatId)
-	rows, err := db.db.Query(strSql)
+	rows, err := db.Db.Query(strSql)
 	if err != nil {
 		log.Println(err)
 		return
@@ -249,7 +249,7 @@ func (db *database) GetAllUsers(chatId *string) (result [2][]string) {
 
 func (db *database) CheckId2User(id string) (result [2]string) {
 	sqlStr := "select `name`,`username` from `user` where userid=?"
-	row := db.db.QueryRow(sqlStr, id)
+	row := db.Db.QueryRow(sqlStr, id)
 	var name string
 	var username string
 	row.Scan(&name, &username)
@@ -260,7 +260,7 @@ func (db *database) CheckId2User(id string) (result [2]string) {
 func (db *database) Clear() {
 	sqlStr := `show tables`
 	var data string
-	rows, err := db.db.Query(sqlStr)
+	rows, err := db.Db.Query(sqlStr)
 	if err != nil {
 		log.Println(err)
 		return
@@ -268,9 +268,17 @@ func (db *database) Clear() {
 	for rows.Next() {
 		rows.Scan(&data)
 		strSql := fmt.Sprintf("DROP TABLE `%s`", data)
-		_, err := db.db.Exec(strSql)
+		_, err := db.Db.Exec(strSql)
 		if err != nil {
 			log.Println(err)
 		}
 	}
+}
+
+func (db *database) IsAdmin(userId int64) bool {
+	sqlStr := "select * from `admin` where userId=?"
+	row := db.Db.QueryRow(sqlStr, userId)
+	var id int64
+	row.Scan(&id)
+	return id != 0
 }

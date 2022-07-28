@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"bot/dbManager"
 	"encoding/json"
 	"fmt"
@@ -11,17 +12,15 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
-	. "bot/config"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var config = dbManager.InitMysql("config", CONFIG_TOKEN, "config")
 
-
-
 func GetMessgae(update *tgbotapi.Update) {
-	if update.Message!=nil {
-	config.AddGroup(fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
+	if update.Message != nil {
+		config.AddGroup(fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
 	}
 }
 
@@ -105,4 +104,12 @@ func getCoin(update *tgbotapi.Update, coinType string) {
 	msgConfig, _ := botTool.SendMessage(update, &msg, true)
 	msg = fmt.Sprintf("啊哈哈哈哈哈哈\n价格来咯！\n1.0 %s = %.2f USD", strings.ToUpper(coinType), text["data"].([]interface{})[0].(map[string]interface{})["open"].(float64))
 	botTool.Edit(msgConfig, &msg)
+}
+
+func getReplyAt(update *tgbotapi.Update) string {
+	return 	fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetReplyName(update), update.Message.From.ID)
+}
+
+func getAt(update *tgbotapi.Update) string {
+	return 	fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetName(update), update.Message.From.ID)
 }

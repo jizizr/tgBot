@@ -23,8 +23,6 @@ func init() {
 	}
 }
 
-
-
 var h *botTool.Handler
 
 // type hhh *botTool.Tgbotapi.Update
@@ -60,6 +58,7 @@ func main() {
 	h.HandleFunc("/music", Music, "搜索音乐")
 	h.HandleFunc("/ban", Ban, "")
 	//	h.HandleFunc("/html", Html, "Html To Pic")
+	h.HandleFunc("/admin", Admin)
 	h.HandleFunc("^(一言|morning|早上好){1}$", Quote)
 	h.HandleFunc(`^[\s\S]*(\(|[|{|<|（|《|【|（|［|｛|＜|『|「|«|\)|]|}|>|）|》|】|］|）|｝|＞|』|」|»)$`, Fix)
 	h.HandleFunc("", TextManager)
