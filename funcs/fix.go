@@ -2,7 +2,10 @@ package funcs
 
 import (
 	"bot/botTool"
+	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -10,6 +13,10 @@ import (
 var KH = [...]string{"(", ")", "[", "]", "{", "}", "<", ">", "（", "）", "《", "》", "【", "】", "［", "］", "（", "）", "｛", "｝", "＜", "＞", "『", "』", "「", "」", "«", "»"}
 var ZKH = [...]string{"(", "[", "{", "<", "（", "《", "【", "［", "（", "｛", "＜", "『", "「", "«"}
 var YKH = [...]string{")", "]", "}", ">", "）", "》", "】", "］", "）", "｝", "＞", "』", "」", "»"}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func Fix(update *tgbotapi.Update) {
 	var st []string
@@ -29,5 +36,14 @@ func Fix(update *tgbotapi.Update) {
 	if text == "" {
 		return
 	}
-	botTool.SendMessage(update, &text, true)
+	//random
+	if len(text) > 8 && rand.Intn(10) < 5 {
+		text1 := strings.Repeat("这", len(text))
+		text = fmt.Sprintf("%s\n\n你TM拿%s么多括号给宁妈上坟吗？！", text, text1)
+	}
+	_, err := botTool.SendMessage(update, &text, true)
+	if err != nil {
+		str := "宁个寄吧，发了这么多括号，您拿他吃饭吗？"
+		botTool.SendMessage(update, &str, true)
+	}
 }
