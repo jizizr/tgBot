@@ -2,6 +2,7 @@ package group
 
 import (
 	"bytes"
+	"fmt"
 	// "fmt"
 	"image/color"
 	"image/png"
@@ -9,7 +10,7 @@ import (
 	// "os"
 	// "time"
 
-	"github.com/jizizr/wordclouds"
+	wordclouds "github.com/jizizr/WCloud"
 )
 
 var DefaultColors = []color.RGBA{
@@ -48,10 +49,12 @@ func init() {
 		wordclouds.Width(600),
 		wordclouds.RandomPlacement(false),
 		wordclouds.WordSizeFunction("linear"),
+		wordclouds.CopyrightFontSize(10),
+		wordclouds.CopyrightString(""),
 	}
 }
 
-func Rank(inputWords map[string]int) []byte {
+func Rank(inputWords map[string]int,name string) []byte {
 
 	// Load words
 	// inputWords := map[string]int{"消息": 42, "是啊": 30, "中文": 15, "也是": 10, "而我": 5, "撒旦": 11, "落后": 11}
@@ -59,8 +62,10 @@ func Rank(inputWords map[string]int) []byte {
 	// Load config
 
 	// start := time.Now()
+	oarr[10] = wordclouds.CopyrightString(fmt.Sprintf("by %s",name))
 	w := wordclouds.NewWordcloud(inputWords,
-		oarr...)
+		oarr...,
+	)
 
 	// outputFile, _ := os.Create("test.png")
 	buf := new(bytes.Buffer)
