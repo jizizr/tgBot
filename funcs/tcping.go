@@ -10,16 +10,20 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+func splitfunc(r rune) bool {
+	return r == ' ' || r == ':'
+}
+
 func Ping(update *tgbotapi.Update) {
 	str := "正在测试，plz wait..."
 	var ip, port string
 	msg, _ := botTool.SendMessage(update, &str, true)
-	arr := strings.Split(update.Message.Text, " ")
+	arr := strings.FieldsFunc(update.Message.Text, splitfunc)
 	if len(arr) == 2 {
 		ip = arr[1]
 		port = "80"
 	} else if len(arr) != 3 {
-		str = "请输入正确的格式，例如：/tp [ip] [port]"
+		str = "请输入正确的格式，例如：/tp ([ip]:[port]|[ip] [port])"
 		botTool.Edit(msg, &str)
 		return
 	} else {
