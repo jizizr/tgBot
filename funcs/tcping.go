@@ -23,7 +23,7 @@ func Ping(update *tgbotapi.Update) {
 		ip = arr[1]
 		port = "80"
 	} else if len(arr) != 3 {
-		str = "请输入正确的格式，例如：/tp ([ip]:[port]|[ip] [port])"
+		str = "请输入正确的格式，例如：\n/tp 91.121.210.56:54343\n/tp 91.121.210.56 54343"
 		botTool.Edit(msg, &str)
 		return
 	} else {
