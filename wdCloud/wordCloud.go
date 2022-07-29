@@ -9,7 +9,7 @@ import (
 	// "os"
 	// "time"
 
-	"github.com/psykhi/wordclouds"
+	"github.com/jizizr/wordclouds"
 )
 
 var DefaultColors = []color.RGBA{
