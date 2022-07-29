@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -37,8 +38,9 @@ func Fix(update *tgbotapi.Update) {
 		return
 	}
 	//random
-	if len(text) > 8 && rand.Intn(10) < 5 {
-		text1 := strings.Repeat("这", len(text))
+	n := utf8.RuneCountInString(text)
+	if n > 8 && rand.Intn(10) < 5 {
+		text1 := strings.Repeat("这", n)
 		text = fmt.Sprintf("%s\n\n你TM拿%s么多括号给宁妈上坟吗？！", text, text1)
 	}
 	_, err := botTool.SendMessage(update, &text, true)
