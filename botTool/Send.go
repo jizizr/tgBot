@@ -115,3 +115,8 @@ func SendPhoto(chatId string, data []byte) {
 	photo := tgbotapi.NewPhoto(id, config)
 	Bot.Send(photo)
 }
+
+func SendForward(chatId int64,fromChatID int64, msgID int) {
+	forward := tgbotapi.NewForward(chatId, fromChatID, msgID)
+	Bot.Send(forward)
+}
