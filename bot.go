@@ -27,7 +27,7 @@ var h *botTool.Handler
 
 // type hhh *botTool.Tgbotapi.Update
 func main() {
-	err := botTool.Init(KEY)
+	err := botTool.Init(KEY, TOKEN2)
 	if err != nil {
 		panic(err)
 	}
@@ -59,8 +59,12 @@ func main() {
 	h.HandleFunc("/ban", Ban, "")
 	//	h.HandleFunc("/html", Html, "Html To Pic")
 	h.HandleFunc("/admin", Admin)
+	h.HandleFunc("/ocr", Ocr, "图片转文字")
+	h.HandleFunc("/geturl", GetFileUrl)
 	h.HandleFunc("^(一言|morning|早上好){1}$", Quote)
-	h.HandleFunc(`^[\s\S]*(\(|[|{|<|（|《|【|（|［|｛|＜|『|「|«|\)|]|}|>|）|》|】|］|）|｝|＞|』|」|»)$`, Fix)
+	// h.HandleFunc(`^[\s\S]*(\(|[|{|<|（|《|【|（|［|｛|＜|『|「|«|\)|]|}|>|）|》|】|］|）|｝|＞|』|」|»)$`, Fix)
+	h.HandleFunc("", Fix)
+	h.HandleFunc("", Repeat)
 	h.HandleFunc("", TextManager)
 	h.HandleFunc("/", GetMessgae)
 	h.HandleFunc("", GetMessgae)
