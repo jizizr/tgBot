@@ -103,7 +103,11 @@ func Translate(update *tgbotapi.Update) {
 			if source == nil {
 				continue
 			}
-			source1 = append(source1, source.([]interface{})[0].([]interface{})[0].(string)+"\n")
+			stemp := source.([]interface{})
+			source1 = append(source1, stemp[0].([]interface{})[0].(string)+"\n")
+			if len(stemp) == 1 {
+				continue
+			}
 			source2 = append(source2, source.([]interface{})[1].([]interface{})[0].(string)+"\n")
 		}
 	}
