@@ -53,7 +53,7 @@ func (c *CommandHandler) handle(command string, callback HandleFunc, msg ...stri
 	}
 }
 
-func (h *CommandHandler) match(update *tgbotapi.Update) {
+func (h *CommandHandler) match(update tgbotapi.Update) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println(err)
@@ -74,9 +74,9 @@ func (h *CommandHandler) match(update *tgbotapi.Update) {
 	} else {
 		arr = strings.Split(data, " ")
 	}
-	h.call(arr[0], update)
+	h.call(arr[0], &update)
 	for _, f := range h.defultFuncs {
-		go f(update)
+		go f(&update)
 	}
 }
 
@@ -117,7 +117,7 @@ func (t *TextHandler) defultHandle(callback HandleFunc) {
 	t.defultFuncs = append(t.defultFuncs, safe(callback))
 }
 
-func (h *TextHandler) match(update *tgbotapi.Update) {
+func (h *TextHandler) match(update tgbotapi.Update) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println(err)
@@ -126,11 +126,11 @@ func (h *TextHandler) match(update *tgbotapi.Update) {
 	data := update.Message.Text
 	for _, f := range h.funcs {
 		if f.key.MatchString(data) {
-			go f.fn(update)
+			go f.fn(&update)
 		}
 	}
 	for _, f := range h.defultFuncs {
-		go f(update)
+		go f(&update)
 	}
 }
 
@@ -148,10 +148,13 @@ func NewTextHandler() *TextHandler {
 		defultFuncs: []HandleFunc{},
 	}
 }
-
+var Test *tgbotapi.BotAPI
 //Init Bot
-func Init(KEY string) (err error) {
+func Init(KEY string,TEST ...string) (err error) {
 	Bot, err = tgbotapi.NewBotAPI(KEY)
+	if len(TEST)==1 {
+		Test,_=tgbotapi.NewBotAPI(TEST[0])
+	}
 	Token = KEY
 	return
 }
@@ -228,12 +231,12 @@ func (h *Handler) Polling(CONFIG string) {
 			// 	continue
 			// }
 			if update.Message.IsCommand() {
-				go h.CommandHandler.match(&update)
+				go h.CommandHandler.match(update)
 			} else {
-				go h.TextHandler.match(&update)
+				go h.TextHandler.match(update)
 			}
 		} else if update.CallbackQuery != nil {
-			go h.CommandHandler.match(&update)
+			go h.CommandHandler.match(update)
 		}
 	}
 }
