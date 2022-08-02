@@ -25,13 +25,15 @@ func Curl(update *tgbotapi.Update) {
 	}
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println(err)
+		str := err.Error()
+		botTool.SendMessage(update, &str, true)
 		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		str := err.Error()
+		botTool.SendMessage(update, &str, true)
 		return
 	}
 	// text := string(body)
