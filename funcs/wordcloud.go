@@ -13,7 +13,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/yanyiwu/gojieba"
+	"github.com/jizizr/gojieba"
 )
 
 // var re3, _ = regexp.Compile(`[\p{P}\s]*`)
@@ -50,7 +50,7 @@ func TextManager(update *tgbotapi.Update) {
 
 }
 
-func getPic(chatId string,name string) {
+func getPic(chatId string, name string) {
 	chatId2 := fmt.Sprintf("%sGroup", chatId)
 	result := db.GetAllWords(&chatId2)
 	if result == nil {
@@ -60,7 +60,7 @@ func getPic(chatId string,name string) {
 		botTool.Bot.Send(msg)
 		return
 	}
-	botTool.SendPhoto(chatId, group.Rank(result,name))
+	botTool.SendPhoto(chatId, group.Rank(result, name))
 }
 
 func Clear() {
@@ -71,7 +71,7 @@ func ScheduleTask() {
 	groups := make([]string, 0)
 	db.TableInfo(&groups)
 	for _, v := range groups {
-		getPic(v,"cron")
+		getPic(v, "cron")
 		getUsers(v)
 	}
 }
