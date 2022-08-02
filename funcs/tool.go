@@ -107,7 +107,7 @@ func getCoin(update *tgbotapi.Update, coinType string) {
 }
 
 func getReplyAt(update *tgbotapi.Update) string {
-	return 	fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetReplyName(update), update.Message.From.ID)
+	return 	fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetReplyName(update), update.Message.ReplyToMessage.From.ID)
 }
 
 func getAt(update *tgbotapi.Update) string {
