@@ -66,6 +66,7 @@ func main() {
 	h.HandleFunc("", Fix)
 	h.HandleFunc("", Repeat)
 	h.HandleFunc("", TextManager)
+	h.HandleFunc("/", Guozao)
 	h.HandleFunc("/", GetMessgae)
 	h.HandleFunc("", GetMessgae)
 	h.Polling(BOT_CONFIG)
