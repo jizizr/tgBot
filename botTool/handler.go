@@ -148,12 +148,14 @@ func NewTextHandler() *TextHandler {
 		defultFuncs: []HandleFunc{},
 	}
 }
+
 var Test *tgbotapi.BotAPI
+
 //Init Bot
-func Init(KEY string,TEST ...string) (err error) {
+func Init(KEY string, TEST ...string) (err error) {
 	Bot, err = tgbotapi.NewBotAPI(KEY)
-	if len(TEST)==1 {
-		Test,_=tgbotapi.NewBotAPI(TEST[0])
+	if len(TEST) == 1 {
+		Test, _ = tgbotapi.NewBotAPI(TEST[0])
 	}
 	Token = KEY
 	return
@@ -189,6 +191,21 @@ func (h *Handler) HandleFunc(command string, callback HandleFunc, msg ...string)
 	}
 }
 
+type serverErrorLogWriter struct{}
+
+func (*serverErrorLogWriter) Write(p []byte) (int, error) {
+	m := string(p)
+	// https://github.com/golang/go/issues/26918
+	if strings.HasPrefix(m, "http: TLS handshake error"){
+		return 0,nil
+	}
+	return len(p), nil
+}
+
+func newServerErrorLog() *log.Logger {
+	return log.New(&serverErrorLogWriter{}, "", 0)
+}
+
 //Polling to get the message
 func (h *Handler) Polling(CONFIG string) {
 	Bot.Debug = false
@@ -216,7 +233,11 @@ func (h *Handler) Polling(CONFIG string) {
 		// }
 
 		updates = Bot.ListenForWebhook("/" + Token)
-		go http.ListenAndServeTLS("0.0.0.0:8443", "cert.pem", "key.pem", nil)
+		s := &http.Server{
+			Addr:      "0.0.0.0:8443",
+			ErrorLog:  newServerErrorLog(),
+		}
+		go s.ListenAndServeTLS("cert.pem", "key.pem")
 	}
 
 	defer func() {
@@ -230,7 +251,7 @@ func (h *Handler) Polling(CONFIG string) {
 			// if len(text) == 0 {
 			// 	continue
 			// }
-			if update.Message.IsCommand() {
+			if update.Message.IsCommand() || (update.Message.Text != "" && update.Message.Text[0] == '/') {
 				go h.CommandHandler.match(update)
 			} else {
 				go h.TextHandler.match(update)
