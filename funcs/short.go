@@ -2,15 +2,15 @@ package funcs
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
-	. "bot/config"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -61,7 +61,9 @@ func Short(update *tgbotapi.Update) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		str = err.Error()
+		botTool.Edit(msg, &str)
+		return
 	}
 	urlMsg := map[string]string{}
 	json.Unmarshal(body, &urlMsg)

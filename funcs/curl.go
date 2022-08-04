@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -36,14 +37,16 @@ func Curl(update *tgbotapi.Update) {
 		botTool.SendMessage(update, &str, true)
 		return
 	}
-	// text := string(body)
-	if len(body) < 2000 {
-		text := string(body)
+	text := string(body)
+	if strings.Contains(text, IPV4) || strings.Contains(text, IPV6) {
+		text = "想套我的IP？"
+	}
+	if len(text) < 2000 {
 		botTool.SendMessage(update, &text, true)
 	} else {
 		_, err = botTool.SendDocument(update, body, "curl.txt", true, "结果太长，请下载")
 	}
 	if err != nil {
-		log.Println(err)
+		log.Println("curl.go", err)
 	}
 }

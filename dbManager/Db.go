@@ -72,7 +72,7 @@ func (db *database) TableInfo(groups *[]string) {
 	var data string
 	rows, err := db.Db.Query(sqlStr)
 	if err != nil {
-		log.Println(err)
+		log.Println("Table info", err)
 		return
 	}
 	for rows.Next() {
@@ -90,7 +90,7 @@ func (db *database) TableInfo(groups *[]string) {
 func (db *database) AddMessage(chatId string, message string) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("addMessage", err)
 		}
 	}()
 	chatId = chatId + "Group"
@@ -102,10 +102,10 @@ func (db *database) AddMessage(chatId string, message string) {
 			db.CreateChatTable(chatId)
 			result, err = db.Db.Exec(sqlStr, message)
 			if err != nil {
-				log.Println(err)
+				log.Println("Addmessage", err)
 			}
 		} else {
-			log.Println(message)
+			log.Println("AddMessgae", message)
 		}
 	}
 	_, err = result.RowsAffected()
@@ -117,7 +117,7 @@ func (db *database) AddMessage(chatId string, message string) {
 func (db *database) AddUser(chatId string, userId string, name string) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("AddUser", err)
 		}
 	}()
 	chatId = chatId + "User"
@@ -145,7 +145,7 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 func (db *database) AddGroup(chatId string, name string, groupname string, user string, username string, nickname string) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("AddGroup", err)
 		}
 	}()
 	sqlStr := "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
@@ -198,7 +198,7 @@ func (db *database) AddGroup(chatId string, name string, groupname string, user 
 func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("GetAllWord", err)
 		}
 	}()
 	strSql := fmt.Sprintf("select groupData,times from `%s`", *chatId)
@@ -206,7 +206,7 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
 		if driverErr.Number != 1146 {
-			log.Println(err)
+			log.Println("Getallword", err)
 		}
 		return
 	}
@@ -224,13 +224,13 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 func (db *database) GetAllUsers(chatId *string) (result [2][]string) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("getallUser", err)
 		}
 	}()
 	strSql := fmt.Sprintf("select times,name from `%sUser` order by times desc limit 5", *chatId)
 	rows, err := db.Db.Query(strSql)
 	if err != nil {
-		log.Println(err)
+		log.Println("GetallUser", err)
 		return
 	}
 	// result = make([][]string,0)
@@ -262,7 +262,7 @@ func (db *database) Clear() {
 	var data string
 	rows, err := db.Db.Query(sqlStr)
 	if err != nil {
-		log.Println(err)
+		log.Println("clear", err)
 		return
 	}
 	for rows.Next() {
@@ -270,7 +270,7 @@ func (db *database) Clear() {
 		strSql := fmt.Sprintf("DROP TABLE `%s`", data)
 		_, err := db.Db.Exec(strSql)
 		if err != nil {
-			log.Println(err)
+			log.Println("Clear", err)
 		}
 	}
 }

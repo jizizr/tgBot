@@ -55,13 +55,13 @@ func goHttp(url string, ip, port string, wg ...*sync.WaitGroup) (b string) {
 	}
 	resp, err := http.Get(fmt.Sprintf("%s?ip=%s&port=%s", url, ip, port))
 	if err != nil {
-		log.Println(err)
+		log.Println("goHttp", err)
 		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		log.Println("GoHttp", err)
 		return
 	}
 	b = string(body)
@@ -90,7 +90,7 @@ func index(text string, arr [14]string) int {
 func getToMap(url string) (res map[string]interface{}) {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println(err)
+		log.Println("GetTomap", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -107,9 +107,9 @@ func getCoin(update *tgbotapi.Update, coinType string) {
 }
 
 func getReplyAt(update *tgbotapi.Update) string {
-	return 	fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetReplyName(update), update.Message.ReplyToMessage.From.ID)
+	return fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetReplyName(update), update.Message.ReplyToMessage.From.ID)
 }
 
 func getAt(update *tgbotapi.Update) string {
-	return 	fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetName(update), update.Message.From.ID)
+	return fmt.Sprintf("[%s](tg://user?id=%d)", botTool.GetName(update), update.Message.From.ID)
 }

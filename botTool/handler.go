@@ -56,7 +56,7 @@ func (c *CommandHandler) handle(command string, callback HandleFunc, msg ...stri
 func (h *CommandHandler) match(update tgbotapi.Update) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("in handler.go/match", err)
 		}
 	}()
 	var data string
@@ -120,7 +120,7 @@ func (t *TextHandler) defultHandle(callback HandleFunc) {
 func (h *TextHandler) match(update tgbotapi.Update) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("in handler.go/match", err)
 		}
 	}()
 	data := update.Message.Text
@@ -196,8 +196,8 @@ type serverErrorLogWriter struct{}
 func (*serverErrorLogWriter) Write(p []byte) (int, error) {
 	m := string(p)
 	// https://github.com/golang/go/issues/26918
-	if strings.HasPrefix(m, "http: TLS handshake error"){
-		return 0,nil
+	if strings.HasPrefix(m, "http: TLS handshake error") {
+		return 0, nil
 	}
 	return len(p), nil
 }
@@ -234,15 +234,15 @@ func (h *Handler) Polling(CONFIG string) {
 
 		updates = Bot.ListenForWebhook("/" + Token)
 		s := &http.Server{
-			Addr:      "0.0.0.0:8443",
-			ErrorLog:  newServerErrorLog(),
+			Addr:     "0.0.0.0:8443",
+			ErrorLog: newServerErrorLog(),
 		}
 		go s.ListenAndServeTLS("cert.pem", "key.pem")
 	}
 
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("in handler.go/Polling", err)
 		}
 	}()
 	for update := range updates {
