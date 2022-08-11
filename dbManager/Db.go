@@ -1,11 +1,13 @@
 package dbManager
 
 import (
+	"bot/botTool"
 	"database/sql"
 	"fmt"
 	"log"
 
 	"github.com/go-sql-driver/mysql"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	// _ "github.com/go-sql-driver/mysql"
 )
 
@@ -103,9 +105,11 @@ func (db *database) AddMessage(chatId string, message string) {
 			result, err = db.Db.Exec(sqlStr, message)
 			if err != nil {
 				log.Println("Addmessage", err)
+				return
 			}
 		} else {
 			log.Println("AddMessgae", message)
+			return
 		}
 	}
 	_, err = result.RowsAffected()
@@ -142,14 +146,29 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 	}
 }
 
-func (db *database) AddGroup(chatId string, name string, groupname string, user string, username string, nickname string) {
+func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string, groupname string, user string, username string, nickname string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("AddGroup", err)
 		}
 	}()
-	sqlStr := "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
-
+	sqlStr := "select `name`,`username` from `user` where userid=?"
+	row := db.Db.QueryRow(sqlStr, user)
+	var nameDb, usernameDb string
+	row.Scan(&nameDb, &usernameDb)
+	var msg string
+	if usernameDb != username {
+		msg = fmt.Sprintf("change username from @%s to @%s\n", usernameDb, username)
+	}
+	if nameDb != nickname {
+		msg += fmt.Sprintf("chaneg nickname from %s to %s\n", nameDb, nickname)
+	}
+	if msg == "" {
+		return
+	}
+	msg = fmt.Sprintf("user: [%s](tg://user?id=%s)\n\n%s", user, user, msg)
+	botTool.SendMessage(update, &msg, false, "Markdown")
+	sqlStr = "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
 	result, _ := db.Db.Exec(sqlStr, user, username, nickname, username, nickname)
 	_, err := result.RowsAffected()
 	// log.Println(sqlStr)

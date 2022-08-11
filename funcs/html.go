@@ -4,7 +4,7 @@ import (
 	"bot/botTool"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -25,7 +25,7 @@ func Html(update *tgbotapi.Update) {
 
 	// io.Copy(out, resp.Body)
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	// fmt.Println(len(body))
 	if len(body) == 0 {
 		str := "请检查网址是否正确"

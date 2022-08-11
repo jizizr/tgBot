@@ -9,11 +9,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var guozaoMatch = regexp.MustCompile(`[^a-zA-Z0-9_/]+`)
+var guozaoMatch = regexp.MustCompile(`^/[a-zA-Z0-9_/]*$`)
 
 func Guozao(update *tgbotapi.Update) {
+	if update.Message.Text == "" {
+		return
+	}
 	arr := strings.Split(update.Message.Text, " ")
-	if !guozaoMatch.MatchString(arr[0][1:]) {
+	if guozaoMatch.MatchString(arr[0]) {
 		return
 	}
 	var str string

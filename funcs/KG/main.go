@@ -2,7 +2,7 @@ package KG
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -26,7 +26,7 @@ func List(Bot *tgbotapi.BotAPI, ChatID int64, MessageID int, ID string, Name str
 		if Response, Error := Client.Do(ResponseData); Error == nil {
 			defer Response.Body.Close()
 
-			if Body, Error := ioutil.ReadAll(Response.Body); Error == nil {
+			if Body, Error := io.ReadAll(Response.Body); Error == nil {
 				if InlineKeyboardButton, OK := GetListInlineKeyboardButton(Body, OriginMessageID); OK == "OK" {
 					EditText := "请选择 <code>" + Name + "</code> 音乐"
 					EditMessage := tgbotapi.NewEditMessageTextAndMarkup(ChatID, MessageID, EditText, InlineKeyboardButton)
@@ -114,7 +114,7 @@ func Link(Bot *tgbotapi.BotAPI, ChatID int64, MessageID int, ID string, OrderSpl
 			if Response, Error := Client.Do(ResponseData); Error == nil {
 				defer Response.Body.Close()
 
-				if Body, Error := ioutil.ReadAll(Response.Body); Error == nil {
+				if Body, Error := io.ReadAll(Response.Body); Error == nil {
 					if Index == 0 {
 						if Name, AudioID = GetDataID(Body); Name == "" || AudioID == "" {
 							AnswerCallbackQueryText = "音乐文件ID获取失败"
@@ -124,7 +124,7 @@ func Link(Bot *tgbotapi.BotAPI, ChatID int64, MessageID int, ID string, OrderSpl
 							EditText = "正在获取 <code>" + Name + "</code> 音乐ID..."
 							EditMessage := tgbotapi.NewMessage(ChatID, EditText)
 							EditMessage.ParseMode = "HTML"
-							msg,_:=Bot.Send(EditMessage)
+							msg, _ := Bot.Send(EditMessage)
 							MessageID = msg.MessageID
 						}
 					} else {

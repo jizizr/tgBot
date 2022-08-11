@@ -1,6 +1,6 @@
 module bot
 
-go 1.18
+go 1.19
 
 require (
 	github.com/UallenQbit/GoLang-SplitString v0.0.0-20220707183412-e4aec70f5859

@@ -5,7 +5,7 @@ import (
 	. "bot/config"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -59,7 +59,7 @@ func Short(update *tgbotapi.Update) {
 		return
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		str = err.Error()
 		botTool.Edit(msg, &str)

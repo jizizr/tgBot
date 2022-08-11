@@ -55,7 +55,7 @@ func SendMessage(update *tgbotapi.Update, text *string, reply bool, mode ...stri
 	return &msgConfig, error
 }
 
-func Edit(msg *tgbotapi.Message, text *string, mode ...string) (tgbotapi.Message, error) {
+func Edit(msg *tgbotapi.Message, text *string, mode ...string) (*tgbotapi.Message, error) {
 	editMessage := tgbotapi.EditMessageTextConfig{
 		BaseEdit:              tgbotapi.BaseEdit{ChatID: msg.Chat.ID, MessageID: msg.MessageID},
 		Text:                  *text,
@@ -65,7 +65,8 @@ func Edit(msg *tgbotapi.Message, text *string, mode ...string) (tgbotapi.Message
 	if len(mode) > 0 {
 		editMessage.ParseMode = mode[0]
 	}
-	return Bot.Send(editMessage)
+	msgConfig, error := Bot.Send(editMessage)
+	return &msgConfig, error
 }
 
 func SendDocument(update *tgbotapi.Update, text []byte, name string, reply bool, caption ...string) (*tgbotapi.Message, error) {
@@ -116,7 +117,7 @@ func SendPhoto(chatId string, data []byte) {
 	Bot.Send(photo)
 }
 
-func SendForward(chatId int64,fromChatID int64, msgID int) {
+func SendForward(chatId int64, fromChatID int64, msgID int) {
 	forward := tgbotapi.NewForward(chatId, fromChatID, msgID)
 	Bot.Send(forward)
 }

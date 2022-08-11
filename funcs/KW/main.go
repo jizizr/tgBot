@@ -2,7 +2,7 @@ package KW
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,7 +34,7 @@ func List(Bot *tgbotapi.BotAPI, ChatID int64, MessageID int, ID string, Name str
 			if Response, Error := Client.Do(ResponseData); Error == nil {
 				defer Response.Body.Close()
 
-				if Body, Error := ioutil.ReadAll(Response.Body); Error == nil {
+				if Body, Error := io.ReadAll(Response.Body); Error == nil {
 					if InlineKeyboardButton, OK := GetListInlineKeyboardButton(Body, OriginMessageID); OK == "OK" {
 						EditText := "请选择 <code>" + Name + "</code> 音乐"
 						EditMessage := tgbotapi.NewEditMessageTextAndMarkup(ChatID, MessageID, EditText, InlineKeyboardButton)
@@ -139,7 +139,7 @@ func Link(Bot *tgbotapi.BotAPI, ChatID int64, MessageID int, ID string, OrderSpl
 		if Response, Error := Client.Do(ResponseData); Error == nil {
 			defer Response.Body.Close()
 
-			if Body, Error := ioutil.ReadAll(Response.Body); Error == nil {
+			if Body, Error := io.ReadAll(Response.Body); Error == nil {
 				if OriginMessageID, Error := strconv.Atoi(OrderSplit[3]); Error == nil {
 					Name := strings.Replace(strings.Replace(CallbackText, "请选择 ", "", -1), " 音乐", "", -1)
 					EditText = "已获取到 <code>" + Name + "</code> 音乐文件正在上传..."

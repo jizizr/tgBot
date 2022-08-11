@@ -2,9 +2,7 @@ package funcs
 
 import (
 	"bot/botTool"
-	. "bot/config"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 	"strings"
 
@@ -14,11 +12,14 @@ import (
 func Curl(update *tgbotapi.Update) {
 	arr := strings.Split(update.Message.Text, " ")
 	var url string
+	var msg *tgbotapi.Message
 	if len(arr) == 1 {
-		replyMsg := tgbotapi.NewMessage(update.Message.Chat.ID, "Usage: curl [url]")
-		botTool.Bot.Send(replyMsg)
+		str := "Usage: curl [url]"
+		botTool.SendMessage(update, &str, true)
 		return
 	} else {
+		str := "正在请求中..."
+		msg, _ = botTool.SendMessage(update, &str, true)
 		url = arr[1]
 	}
 	if url[:4] != "http" {
@@ -27,26 +28,35 @@ func Curl(update *tgbotapi.Update) {
 	resp, err := http.Get(url)
 	if err != nil {
 		str := err.Error()
-		botTool.SendMessage(update, &str, true)
+		botTool.Edit(msg, &str)
 		return
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		str := err.Error()
-		botTool.SendMessage(update, &str, true)
+		botTool.Edit(msg, &str)
 		return
 	}
-	text := string(body)
-	if strings.Contains(text, IPV4) || strings.Contains(text, IPV6) {
-		text = "想套我的IP？"
-	}
-	if len(text) < 2000 {
-		botTool.SendMessage(update, &text, true)
+	if len(body) < 2000 {
+		str := string(body)
+		_, err = botTool.SendMessage(update, &str, true)
 	} else {
-		_, err = botTool.SendDocument(update, body, "curl.txt", true, "结果太长，请下载")
+		contentTypeArr := strings.Split(resp.Header.Get("Content-type"), "/")
+		var contentType string
+		if len(contentTypeArr) < 2 {
+			contentType = "text"
+		} else {
+			contentType = contentTypeArr[len(contentTypeArr)-1]
+			contentType = strings.Split(contentType, ";")[0]
+		}
+		_, err = botTool.SendDocument(update, body, "curl."+contentType, true, "结果太长，请下载")
 	}
 	if err != nil {
-		log.Println("curl.go", err)
+		str := err.Error()
+		botTool.Edit(msg, &str)
+	} else {
+		str := "获取成功"
+		botTool.Edit(msg, &str)
 	}
 }

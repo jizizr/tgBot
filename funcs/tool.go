@@ -6,7 +6,7 @@ import (
 	"bot/dbManager"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -20,7 +20,7 @@ var config = dbManager.InitMysql("config", CONFIG_TOKEN, "config")
 
 func GetMessgae(update *tgbotapi.Update) {
 	if update.Message != nil {
-		config.AddGroup(fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
+		config.AddGroup(update,fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
 	}
 }
 
@@ -32,7 +32,7 @@ func getHistory(body *[]byte, date ...string) {
 		resp, _ = http.Get(fmt.Sprintf("http://hao.360.cn/histoday/%s%s.html", date[0], date[1]))
 	}
 	defer resp.Body.Close()
-	*body, _ = ioutil.ReadAll(resp.Body)
+	*body, _ = io.ReadAll(resp.Body)
 }
 
 func httpfix(url string) string {
@@ -59,7 +59,7 @@ func goHttp(url string, ip, port string, wg ...*sync.WaitGroup) (b string) {
 		return
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("GoHttp", err)
 		return

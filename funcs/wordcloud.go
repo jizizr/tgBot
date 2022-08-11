@@ -5,6 +5,7 @@ import (
 	"bot/dbManager"
 	group "bot/wdCloud"
 	"fmt"
+	"unicode/utf8"
 
 	// "regexp"
 	. "bot/config"
@@ -32,18 +33,15 @@ func TextManager(update *tgbotapi.Update) {
 	db.AddUser(chatId, userId, name)
 	// text = re3.ReplaceAllString(text, "")
 	// config.AddGroup(chatId, update.Message.Chat.UserName, update.Message.Chat.Title,fmt.Sprint(update.Message.From.ID),update.Message.From.UserName,getName(update))
-	if len(text) < 2 {
+	if utf8.RuneCountInString(text) < 2 {
 		return
-	} else if len(text) < 7 {
+	} else if utf8.RuneCountInString(text) < 7 {
 		text = strings.Join(jieba.CutForSearch(text, true), " ")
 	}
 	word := jieba.Tag(text)
 	for _, v := range word {
 		w := strings.Split(v, "/")
-		// log.Println(w)
-		if len(w[0]) > 3 && botTool.Contains(cx, w[1]) {
-			// log.Println(w[0])
-			// log.Println(len("中"))
+		if utf8.RuneCountInString(w[0]) > 1 && len(w[0]) < 30 && botTool.Contains(cx, w[1]) {
 			db.AddMessage(chatId, w[0])
 		}
 	}
@@ -83,14 +81,14 @@ func getUsers(chatId string) {
 	top5Users := make([]string, 0)
 	for i := 0; i < len(users); i++ {
 		user := users[i]
-		if len(user) > 5 {
+		if utf8.RuneCountInString(user) > 5 {
 			user = strings.TrimSpace(strings.Split(user, "|")[0])
 		}
-		if len(user) > 5 {
+		if utf8.RuneCountInString(user) > 5 {
 			user = strings.TrimSpace(strings.Split(user, " ")[0])
 		}
-		if len(user) > 5 {
-			user = user[:6]
+		if utf8.RuneCountInString(user) > 5 {
+			user = string([]rune(user)[:6])
 		}
 		top5Users = append(top5Users, fmt.Sprintf("\t\t🎖`%s` 呱唧了:`%s`句\n", user, times[i]))
 	}

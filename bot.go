@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 	c := cron.New()
-	c.AddFunc("0 0 4,12,18,22 * * ?", ScheduleTask)
+	c.AddFunc("0 0 4,10,14,18,22 * * ?", ScheduleTask)
 	c.AddFunc("0 02 4 * * ?", Clear)
 	c.Start()
 	h = botTool.NewHandler()
@@ -72,7 +72,7 @@ func main() {
 	h.Polling(BOT_CONFIG)
 }
 
-func test(update *tgbotapi.Update) {
+func test(update *tgbotapi.Update){
 	if update.Message.From.ID == 1456780662 {
 		fmt.Printf("%+v\n", update.Message.ReplyToMessage.From.ID)
 	}
