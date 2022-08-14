@@ -10,20 +10,31 @@ import (
 )
 
 func Curl(update *tgbotapi.Update) {
-	arr := strings.Split(update.Message.Text, " ")
 	var url string
 	var msg *tgbotapi.Message
-	if len(arr) == 1 {
-		str := "Usage: curl [url]"
-		botTool.SendMessage(update, &str, true)
-		return
+
+	str := "正在请求中..."
+	msg, _ = botTool.SendMessage(update, &str, true)
+
+	if update.Message.ReplyToMessage != nil {
+		url = update.Message.ReplyToMessage.Text
+		if url == "" {
+			url = update.Message.ReplyToMessage.Caption
+		}
+		url = urlMatch.FindString(url)
+		if url == "" {
+			str = "请回复包含链接的文本"
+			botTool.Edit(msg, &str)
+			return
+		}
 	} else {
-		str := "正在请求中..."
-		msg, _ = botTool.SendMessage(update, &str, true)
-		url = arr[1]
-	}
-	if url[:4] != "http" {
-		url = "https://" + url
+		arr := strings.Split(update.Message.Text, " ")
+		if len(arr) == 1 {
+			str := "Usage: curl [url]"
+			botTool.Edit(msg, &str)
+			return
+		}
+		url = httpfix(arr[1])
 	}
 	resp, err := http.Get(url)
 	if err != nil {

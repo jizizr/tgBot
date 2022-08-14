@@ -56,10 +56,12 @@ func main() {
 	h.HandleFunc("/tp", Ping, "测试连通性")
 	h.HandleFunc("/user", User)
 	h.HandleFunc("/music", Music, "搜索音乐")
-	h.HandleFunc("/ban", Ban, "")
+	h.HandleFunc("/ban", Ban, "禁言")
+	h.HandleFunc("/json", Json)
 	//	h.HandleFunc("/html", Html, "Html To Pic")
 	h.HandleFunc("/admin", Admin)
 	h.HandleFunc("/ocr", Ocr, "图片转文字")
+	h.HandleFunc("/wiki", Wiki, "维基百科")
 	h.HandleFunc("/geturl", GetFileUrl)
 	h.HandleFunc("^(一言|morning|早上好){1}$", Quote)
 	// h.HandleFunc(`^[\s\S]*(\(|[|{|<|（|《|【|（|［|｛|＜|『|「|«|\)|]|}|>|）|》|】|］|）|｝|＞|』|」|»)$`, Fix)
@@ -72,7 +74,7 @@ func main() {
 	h.Polling(BOT_CONFIG)
 }
 
-func test(update *tgbotapi.Update){
+func test(update *tgbotapi.Update) {
 	if update.Message.From.ID == 1456780662 {
 		fmt.Printf("%+v\n", update.Message.ReplyToMessage.From.ID)
 	}

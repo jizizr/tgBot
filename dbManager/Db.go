@@ -44,7 +44,7 @@ func (db *database) CreateUserTable(userId string) {
 }
 
 func (db *database) CreateUserConfig(userId string) {
-	sqlStr := fmt.Sprintf("CREATE TABLE `%s` (userId CHAR(16) UNIQUE,time datetime) CHARSET=utf8mb4", userId)
+	sqlStr := fmt.Sprintf("CREATE TABLE `%s` (userId CHAR(16) UNIQUE,username VARCHAR(200),name VARCHAR(200),time datetime) CHARSET=utf8mb4", userId)
 	result, err := db.Db.Exec(sqlStr)
 	if err != nil {
 		log.Printf("%s when Exec Database in User", err)
@@ -125,6 +125,9 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 		}
 	}()
 	chatId = chatId + "User"
+	if len(name) > 200 {
+		name = name[:200]
+	}
 	sqlStr := fmt.Sprintf("insert into `%s` (userId,times,name) values(?,1,?) on DUPLICATE key update times=times+1", chatId)
 	result, err := db.Db.Exec(sqlStr, userId, name)
 	// log.Println(sqlStr)
@@ -152,23 +155,8 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 			log.Println("AddGroup", err)
 		}
 	}()
-	sqlStr := "select `name`,`username` from `user` where userid=?"
-	row := db.Db.QueryRow(sqlStr, user)
-	var nameDb, usernameDb string
-	row.Scan(&nameDb, &usernameDb)
 	var msg string
-	if usernameDb != username {
-		msg = fmt.Sprintf("change username from @%s to @%s\n", usernameDb, username)
-	}
-	if nameDb != nickname {
-		msg += fmt.Sprintf("chaneg nickname from %s to %s\n", nameDb, nickname)
-	}
-	if msg == "" {
-		return
-	}
-	msg = fmt.Sprintf("user: [%s](tg://user?id=%s)\n\n%s", user, user, msg)
-	botTool.SendMessage(update, &msg, false, "Markdown")
-	sqlStr = "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
+	sqlStr := "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
 	result, _ := db.Db.Exec(sqlStr, user, username, nickname, username, nickname)
 	_, err := result.RowsAffected()
 	// log.Println(sqlStr)
@@ -193,21 +181,38 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 	if err != nil {
 		log.Printf("%s when RowsAffected in config", err)
 	}
-	sqlStr = fmt.Sprintf("insert into `%s` (`userId`,`time`) values(?,Now()) ON DUPLICATE KEY UPDATE `time`=Now()", chatId)
-	result, err = db.Db.Exec(sqlStr, user)
-	// log.Println(sqlStr)
+	sqlStr = fmt.Sprintf("select `name`,`username` from `%s` where userid=?", chatId)
+	row := db.Db.QueryRow(sqlStr, user)
+	var nameDb, usernameDb string
+	err = row.Scan(&nameDb, &usernameDb)
+	var flag = true
 	if err != nil {
+		flag = false
 		driverErr, _ := err.(*mysql.MySQLError)
-		if driverErr.Number == 1146 {
+		if err == sql.ErrNoRows {
+		} else if driverErr.Number == 1146 {
 			db.CreateUserConfig(chatId)
-			result, err = db.Db.Exec(sqlStr, user)
-			if err != nil {
-				log.Println(err, name)
-			}
 		} else {
 			log.Println("user:", user)
 		}
 	}
+	if flag {
+		if usernameDb != username {
+			msg = fmt.Sprintf("change username from @%s to @%s\n", usernameDb, username)
+		}
+		if nameDb != nickname {
+			msg += fmt.Sprintf("change nickname from %s to %s\n", nameDb, nickname)
+		}
+		if msg == "" {
+			return
+		}
+		msg = fmt.Sprintf("User: [%s](tg://user?id=%s)\n\n%s", user, user, msg)
+		botTool.SendMessage(update, &msg, false, "Markdown")
+	}
+	sqlStr = fmt.Sprintf("insert into `%s` (`userId`,`username`,`name`,`time`) values(?,?,?,Now()) ON DUPLICATE KEY UPDATE `username`=?,`name`=?,`time`=Now()", chatId)
+	result, _ = db.Db.Exec(sqlStr, user, username, nickname, username, nickname)
+	// log.Println(sqlStr)
+
 	_, err = result.RowsAffected()
 	if err != nil {
 		log.Printf("%s when RowsAffected in Group", err)

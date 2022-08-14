@@ -12,7 +12,7 @@ import (
 var guozaoMatch = regexp.MustCompile(`^/[a-zA-Z0-9_/]*$`)
 
 func Guozao(update *tgbotapi.Update) {
-	if update.Message.Text == "" {
+	if update.Message == nil || update.Message.Text == "" {
 		return
 	}
 	arr := strings.Split(update.Message.Text, " ")
