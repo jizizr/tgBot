@@ -2,6 +2,7 @@ package dbManager
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"database/sql"
 	"fmt"
 	"log"
@@ -16,7 +17,7 @@ type database struct {
 }
 
 func InitMysql(user, token, table string) (db *database) {
-	dsn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", user, token, table)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", user, token, IPV4, table)
 	dbv, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Println(err)
