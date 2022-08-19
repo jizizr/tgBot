@@ -44,11 +44,20 @@ func User(update *tgbotapi.Update) {
 		botTool.SendMessage(update, &str, true)
 		return
 	}
-	result := config.CheckId2User(arr[1])
-	if result[0] == "" && result[1] == "" {
-		str = "User not found"
+	if len(arr[1]) > 1 && arr[1][0] == '@' {
+		result := config.CheckUser2Id(arr[1][1:])
+		if result[0] == "" {
+			str = "User not found"
+		} else {
+			str = fmt.Sprintf("User found:\nId: %s\nNickName: %s\nLast Message Time: %s", result[0], result[1], result[2])
+		}
 	} else {
-		str = fmt.Sprintf("User found:\nUserName: @%s\nNickName: %s", result[0], result[1])
+		result := config.CheckId2User(arr[1])
+		if result[0] == "" && result[1] == "" {
+			str = "User not found"
+		} else {
+			str = fmt.Sprintf("User found:\nUserName: @%s\nNickName: %s\nLast Message Time: %s", result[0], result[1], result[2])
+		}
 	}
 	botTool.SendMessage(update, &str, true)
 }

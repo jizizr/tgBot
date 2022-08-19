@@ -126,7 +126,7 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 	}()
 	chatId = chatId + "User"
 	if len(name) > 200 {
-		name = name[:200]
+		name = name[:198]
 	}
 	sqlStr := fmt.Sprintf("insert into `%s` (userId,times,name) values(?,1,?) on DUPLICATE key update times=times+1", chatId)
 	result, err := db.Db.Exec(sqlStr, userId, name)
@@ -156,7 +156,7 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 		}
 	}()
 	var msg string
-	sqlStr := "INSERT INTO `user`(`userid`,`username`,`name`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?"
+	sqlStr := "INSERT INTO `user`(`userid`,`username`,`name`,time) VALUES(?,?,?,NOW()) ON DUPLICATE KEY UPDATE `username`= ?,`name`=?,`time`=NOW()"
 	result, _ := db.Db.Exec(sqlStr, user, username, nickname, username, nickname)
 	_, err := result.RowsAffected()
 	// log.Println(sqlStr)
@@ -204,6 +204,12 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 			msg += fmt.Sprintf("change nickname from %s to %s\n", nameDb, nickname)
 		}
 		if msg == "" {
+			sqlStr = fmt.Sprintf("UPDATE `%s` SET time = NOW() WHERE userId = ?", chatId)
+			result, _ = db.Db.Exec(sqlStr, user)
+			_, err = result.RowsAffected()
+			if err != nil {
+				log.Printf("%s when RowsAffected in %s", err, chatId)
+			}
 			return
 		}
 		msg = fmt.Sprintf("User: [%s](tg://user?id=%s)\n\n%s", user, user, msg)
@@ -225,7 +231,7 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 			log.Println("GetAllWord", err)
 		}
 	}()
-	strSql := fmt.Sprintf("select groupData,times from `%s`", *chatId)
+	strSql := fmt.Sprintf("select groupData,times from `%s` order by `times` desc limit 0,150", *chatId)
 	rows, err := db.Db.Query(strSql)
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
@@ -271,13 +277,25 @@ func (db *database) GetAllUsers(chatId *string) (result [2][]string) {
 	return
 }
 
-func (db *database) CheckId2User(id string) (result [2]string) {
-	sqlStr := "select `name`,`username` from `user` where userid=?"
+func (db *database) CheckId2User(id string) (result [3]string) {
+	sqlStr := "select `name`,`username`,`time` from `user` where userid=?"
 	row := db.Db.QueryRow(sqlStr, id)
 	var name string
 	var username string
-	row.Scan(&name, &username)
-	result = [2]string{username, name}
+	var time string
+	row.Scan(&name, &username, &time)
+	result = [3]string{username, name, time}
+	return
+}
+
+func (db *database) CheckUser2Id(username string) (result [3]string) {
+	sqlStr := "select `userid`,`name`,`time` from `user` where username=?"
+	row := db.Db.QueryRow(sqlStr, username)
+	var id string
+	var name string
+	var time string
+	row.Scan(&id, &name, &time)
+	result = [3]string{id, name, time}
 	return
 }
 

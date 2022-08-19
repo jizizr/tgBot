@@ -3,6 +3,7 @@ package group
 import (
 	"bytes"
 	"fmt"
+
 	// "fmt"
 	"image/color"
 	"image/png"
@@ -14,17 +15,17 @@ import (
 )
 
 var DefaultColors = []color.RGBA{
-	{0x1b, 0x1b, 0x1b, 0xff},
-	{0x48, 0x48, 0x4B, 0xff},
-	{0x59, 0x3a, 0xee, 0xff},
-	{0x65, 0xCD, 0xFA, 0xff},
-	{0x70, 0xD6, 0xBF, 0xff},
+	{27, 27, 27, 255},
+	{95, 174, 227, 255},
+	{123, 104, 238, 255},
+	{60, 179, 113, 255},
+	// {0x70, 0xD6, 0xBF, 0xff},
 }
 
 var boxes = wordclouds.Mask(
 	"source/mask.png",
-	600,
-	600,
+	800,
+	800,
 	color.RGBA{
 		R: 0,
 		G: 0,
@@ -41,12 +42,12 @@ func init() {
 	}
 	oarr = []wordclouds.Option{
 		wordclouds.FontFile("source/font.ttf"),
-		wordclouds.FontMaxSize(100),
-		wordclouds.FontMinSize(10),
+		wordclouds.FontMaxSize(150),
+		wordclouds.FontMinSize(20),
 		wordclouds.Colors(colors),
 		wordclouds.MaskBoxes(boxes),
-		wordclouds.Height(600),
-		wordclouds.Width(600),
+		wordclouds.Height(800),
+		wordclouds.Width(800),
 		wordclouds.RandomPlacement(false),
 		wordclouds.WordSizeFunction("linear"),
 		wordclouds.CopyrightFontSize(10),
@@ -54,7 +55,7 @@ func init() {
 	}
 }
 
-func Rank(inputWords map[string]int,name string) []byte {
+func Rank(inputWords map[string]int, name string) []byte {
 
 	// Load words
 	// inputWords := map[string]int{"消息": 42, "是啊": 30, "中文": 15, "也是": 10, "而我": 5, "撒旦": 11, "落后": 11}
@@ -62,7 +63,7 @@ func Rank(inputWords map[string]int,name string) []byte {
 	// Load config
 
 	// start := time.Now()
-	oarr[10] = wordclouds.CopyrightString(fmt.Sprintf("by %s",name))
+	oarr[10] = wordclouds.CopyrightString(fmt.Sprintf("by %s", name))
 	w := wordclouds.NewWordcloud(inputWords,
 		oarr...,
 	)

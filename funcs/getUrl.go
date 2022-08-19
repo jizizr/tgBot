@@ -21,8 +21,8 @@ func GetFileUrl(update *tgbotapi.Update) {
 	} else {
 		return
 	}
-	if err!=nil{
-		str=err.Error()
+	if err != nil {
+		str = err.Error()
 	}
 	botTool.SendMessage(update, &str, false)
 }

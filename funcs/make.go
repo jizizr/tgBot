@@ -9,5 +9,5 @@ import (
 
 func MakePic(update *tgbotapi.Update) {
 	chatId := fmt.Sprint(update.Message.Chat.ID)
-	getPic(chatId,botTool.GetName(update))
+	getPic(chatId, botTool.GetName(update))
 }

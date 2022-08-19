@@ -20,7 +20,7 @@ var config = dbManager.InitMysql("config", CONFIG_TOKEN, "config")
 
 func GetMessgae(update *tgbotapi.Update) {
 	if update.Message != nil {
-		config.AddGroup(update,fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
+		config.AddGroup(update, fmt.Sprint(update.Message.Chat.ID), update.Message.Chat.UserName, update.Message.Chat.Title, fmt.Sprint(update.Message.From.ID), update.Message.From.UserName, botTool.GetName(update))
 	}
 }
 

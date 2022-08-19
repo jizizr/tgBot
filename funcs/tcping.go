@@ -17,7 +17,7 @@ func splitfunc(r rune) bool {
 
 var ipMatch = regexp.MustCompile(`(\s|^|https?://)([^:\./\s]+\.)+[^\./:\s]+(:([1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5]|\d{1,4}))?`)
 
-func Ping(update *tgbotapi.Update) {
+func Tcping(update *tgbotapi.Update) {
 	str := "正在测试，plz wait..."
 	var ip, port, url string
 	msg, _ := botTool.SendMessage(update, &str, true)

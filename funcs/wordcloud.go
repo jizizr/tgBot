@@ -42,7 +42,7 @@ func TextManager(update *tgbotapi.Update) {
 	for _, v := range word {
 		w := strings.Split(v, "/")
 		if utf8.RuneCountInString(w[0]) > 1 && len(w[0]) < 30 && botTool.Contains(cx, w[1]) {
-			db.AddMessage(chatId, w[0])
+			go db.AddMessage(chatId, w[0])
 		}
 	}
 

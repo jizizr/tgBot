@@ -2,12 +2,12 @@ package funcs
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"fmt"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"net/url"
 	"strconv"
 	"strings"
-	. "bot/config"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func Weather(update *tgbotapi.Update) {
@@ -19,7 +19,7 @@ func Weather(update *tgbotapi.Update) {
 		return
 	}
 	l := strings.Join(arr[1:], " ")
-	tmp := getToMap(fmt.Sprintf("https://geoapi.qweather.com/v2/city/lookup?location=%s&key=%s", url.QueryEscape(l),WEATHER_TOKEN))["location"]
+	tmp := getToMap(fmt.Sprintf("https://geoapi.qweather.com/v2/city/lookup?location=%s&key=%s", url.QueryEscape(l), WEATHER_TOKEN))["location"]
 	if tmp == nil {
 		str := "未找到此地点"
 		botTool.SendMessage(update, &str, true)
@@ -31,7 +31,7 @@ func Weather(update *tgbotapi.Update) {
 	adm2 := location["adm2"].(string)
 	name := location["name"].(string)
 	l = location["id"].(string)
-	res := getToMap(fmt.Sprintf("https://devapi.qweather.com/v7/weather/now?location=%s&key=%s", l,WEATHER_TOKEN))
+	res := getToMap(fmt.Sprintf("https://devapi.qweather.com/v7/weather/now?location=%s&key=%s", l, WEATHER_TOKEN))
 	time := res["updateTime"]
 	link := res["fxLink"]
 	res = res["now"].(map[string]interface{})
