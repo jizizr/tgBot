@@ -1,12 +1,16 @@
 package group
 
 import (
-	"bytes"
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
 
 	// "fmt"
 	"image/color"
-	"image/png"
 
 	// "os"
 	// "time"
@@ -42,8 +46,8 @@ func init() {
 	}
 	oarr = []wordclouds.Option{
 		wordclouds.FontFile("source/font.ttf"),
-		wordclouds.FontMaxSize(150),
-		wordclouds.FontMinSize(20),
+		wordclouds.FontMaxSize(160),
+		wordclouds.FontMinSize(25),
 		wordclouds.Colors(colors),
 		wordclouds.MaskBoxes(boxes),
 		wordclouds.Height(800),
@@ -63,19 +67,34 @@ func Rank(inputWords map[string]int, name string) []byte {
 	// Load config
 
 	// start := time.Now()
-	oarr[10] = wordclouds.CopyrightString(fmt.Sprintf("by %s", name))
-	w := wordclouds.NewWordcloud(inputWords,
-		oarr...,
-	)
-
+	// oarr[10] = wordclouds.CopyrightString(fmt.Sprintf("by %s", name))
+	// w := wordclouds.NewWordcloud(inputWords,
+	// 	oarr...,
+	// )
+	mmm, _ := json.Marshal(inputWords)
+	resp, _ := http.Get(fmt.Sprintf("http://127.0.0.1:1222/wc?words=%s&group=%s", url.QueryEscape(string(mmm)), name))
+	defer resp.Body.Close()
 	// outputFile, _ := os.Create("test.png")
-	buf := new(bytes.Buffer)
+	// buf := new(bytes.Buffer)
 	// Encode takes a writer interface and an image interface
 	// We pass it the File and the RGBA
-	png.Encode(buf, w.Draw())
+	// png.Encode(buf, w.Draw())
 
 	// Don't forget to close files
 	// outputFile.Close()
 	// fmt.Printf("Done in %v\n", time.Since(start))
-	return buf.Bytes()
+	text, _ := io.ReadAll(resp.Body)
+	fname := string(text)
+	defer os.Remove(fname)
+	file, _ := os.Open(fname)
+	defer file.Close()
+
+	fileInfo, _ := file.Stat()
+	var size int64 = fileInfo.Size()
+	bytes := make([]byte, size)
+
+	//将文件读成字节
+	buffer := bufio.NewReader(file)
+	buffer.Read(bytes)
+	return bytes
 }

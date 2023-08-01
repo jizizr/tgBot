@@ -9,32 +9,36 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func Ban(update *tgbotapi.Update) {
+func Ban(update *tgbotapi.Update, message *tgbotapi.Message) {
 	var sec int64
-	if update.Message.ReplyToMessage == nil {
-		str := "请回复消息"
-		botTool.SendMessage(update, &str, true)
+	if !checkAdmin(message) {
+		BanPlayer(update, message)
 		return
 	}
-	arr := strings.Split(update.Message.Text, " ")
+	if message.ReplyToMessage == nil {
+		str := "请回复消息"
+		botTool.SendMessage(message, str, true)
+		return
+	}
+	arr := strings.Fields(message.Text)
 	if len(arr) < 2 {
 		sec = 60
 	} else {
 		sec, _ = strconv.ParseInt(arr[1], 10, 64)
 	}
-	err := botTool.BanMember(update, update.Message.Chat.ID, update.Message.ReplyToMessage.From.ID, sec)
+	err := botTool.BanMember(update, message, message.ReplyToMessage.From.ID, sec)
 	if err != nil {
 		return
 	}
 
-	str := fmt.Sprintf("%s 已被禁言 %d 秒", getReplyAt(update), sec)
-	botTool.SendMessage(update, &str, true, "Markdown")
+	str := fmt.Sprintf("%s 已被禁言 %d 秒", getReplyAt(update, message), sec)
+	botTool.SendMessage(message, str, true, "Markdown")
 }
 
-func BanPlayer(update *tgbotapi.Update) {
-	gid := update.Message.Chat.ID
+func BanPlayer(update *tgbotapi.Update, message *tgbotapi.Message) {
+	gid := message.Chat.ID
 
-	uid := update.Message.ReplyToMessage.From.ID
+	uid := message.From.ID
 	botme, _ := botTool.Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
 			ChatID: gid,
@@ -43,10 +47,10 @@ func BanPlayer(update *tgbotapi.Update) {
 	})
 	var str string
 	if botme.CanRestrictMembers {
-		botTool.BanMember(update, gid, uid, 60)
-		str = "[" + botTool.GetName(update) + "](tg://user?id=" + fmt.Sprint(uid) + ")乱玩管理员命令,禁言一分钟"
+		botTool.BanMember(update, message, uid, 60)
+		str = "[" + botTool.GetName(update, message) + "](tg://user?id=" + fmt.Sprint(uid) + ")乱玩管理员命令,禁言一分钟"
 	} else {
-		str = "[" + botTool.GetName(update) + "](tg://user?id=" + fmt.Sprint(uid) + ")不要乱玩管理员命令"
+		str = "[" + botTool.GetName(update, message) + "](tg://user?id=" + fmt.Sprint(uid) + ")不要乱玩管理员命令"
 	}
-	botTool.SendMessage(update, &str, true, "Markdown")
+	botTool.SendMessage(message, str, true, "Markdown")
 }

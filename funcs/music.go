@@ -7,17 +7,22 @@ import (
 	"encoding/base64"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
-	StringSplit "github.com/UallenQbit/GoLang-SplitString"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+func splitString(String string, Data string) ([]string, int) {
+	Split := strings.Split(String, Data)
+	return Split, len(Split)
+}
 
 var Client = http.Client{
 	Timeout: time.Second * 8,
 }
 
-func Music(update *tgbotapi.Update) {
+func Music(update *tgbotapi.Update, message *tgbotapi.Message) {
 	var SplitData []string
 	var SplitCount int
 	var ChatID int64
@@ -25,10 +30,10 @@ func Music(update *tgbotapi.Update) {
 	var ID string
 	var CallbackText string
 
-	if update.Message == nil {
+	if message == nil {
 		if update.EditedMessage == nil {
 			if update.CallbackQuery != nil {
-				if SplitData, SplitCount = StringSplit.SplitString(update.CallbackQuery.Data, " "); SplitCount != 0 {
+				if SplitData, SplitCount = splitString(update.CallbackQuery.Data, " "); SplitCount != 0 {
 					ChatID = update.CallbackQuery.Message.Chat.ID
 					MessageID = update.CallbackQuery.Message.MessageID
 					ID = update.CallbackQuery.ID
@@ -36,15 +41,15 @@ func Music(update *tgbotapi.Update) {
 				}
 			}
 		} else {
-			if SplitData, SplitCount = StringSplit.SplitString(update.EditedMessage.Text, " "); SplitCount != 0 {
+			if SplitData, SplitCount = splitString(update.EditedMessage.Text, " "); SplitCount != 0 {
 				ChatID = update.EditedMessage.Chat.ID
 				MessageID = update.EditedMessage.MessageID
 			}
 		}
 	} else {
-		if SplitData, SplitCount = StringSplit.SplitString(update.Message.Text, " "); SplitCount != 0 {
-			ChatID = update.Message.Chat.ID
-			MessageID = update.Message.MessageID
+		if SplitData, SplitCount = splitString(message.Text, " "); SplitCount != 0 {
+			ChatID = message.Chat.ID
+			MessageID = message.MessageID
 		}
 	}
 	if SplitCount > 1 {

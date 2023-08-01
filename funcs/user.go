@@ -9,17 +9,17 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func Admin(update *tgbotapi.Update) {
-	if update.Message.From.ID != 1456780662 {
-		str := fmt.Sprintf("%s\tYou are not @zrcccc!", getAt(update))
-		botTool.SendMessage(update, &str, true, "Markdown")
+func Admin(update *tgbotapi.Update, message *tgbotapi.Message) {
+	if message.From.ID != 1456780662 {
+		str := fmt.Sprintf("%s\tYou are not @zrcccc!", getAt(update, message))
+		botTool.SendMessage(message, str, true, "Markdown")
 		return
 	}
-	if update.Message.ReplyToMessage == nil {
+	if message.ReplyToMessage == nil {
 		return
 	}
 	sqlStr := "INSERT IGNORE INTO `admin` (userid) values(?)"
-	result, err := config.Db.Exec(sqlStr, update.Message.ReplyToMessage.From.ID)
+	result, err := config.Db.Exec(sqlStr, message.ReplyToMessage.From.ID)
 	if err != nil {
 		log.Println(err)
 	}
@@ -27,21 +27,21 @@ func Admin(update *tgbotapi.Update) {
 	if err != nil {
 		log.Println(err)
 	}
-	str := fmt.Sprintf("%s\tYou are admin now!", getReplyAt(update))
-	botTool.SendMessage(update, &str, true, "Markdown")
+	str := fmt.Sprintf("%s\tYou are admin now!", getReplyAt(update, message))
+	botTool.SendMessage(message, str, true, "Markdown")
 }
 
-func User(update *tgbotapi.Update) {
-	if !config.IsAdmin(update.Message.From.ID) {
-		str := fmt.Sprintf("%s\tYou are not admin!", getAt(update))
-		botTool.SendMessage(update, &str, true, "Markdown")
+func User(update *tgbotapi.Update, message *tgbotapi.Message) {
+	if !config.IsAdmin(message.From.ID) {
+		str := fmt.Sprintf("%s\tYou are not admin!", getAt(update, message))
+		botTool.SendMessage(message, str, true, "Markdown")
 		return
 	}
 	var str string
-	arr := strings.Split(update.Message.Text, " ")
+	arr := strings.Split(message.Text, " ")
 	if len(arr) == 1 {
 		str = "Usage: /user [userId]"
-		botTool.SendMessage(update, &str, true)
+		botTool.SendMessage(message, str, true)
 		return
 	}
 	if len(arr[1]) > 1 && arr[1][0] == '@' {
@@ -59,5 +59,5 @@ func User(update *tgbotapi.Update) {
 			str = fmt.Sprintf("User found:\nUserName: @%s\nNickName: %s\nLast Message Time: %s", result[0], result[1], result[2])
 		}
 	}
-	botTool.SendMessage(update, &str, true)
+	botTool.SendMessage(message, str, true)
 }

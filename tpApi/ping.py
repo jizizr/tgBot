@@ -23,7 +23,7 @@ def tcping():
         return "no ip"
     if port is None:
         return "no port"
-    tcping=' '.join(['tcping -n 2 -p',str(port),str(ip)])
+    tcping=' '.join(['tcping -i 0 -n 2 -p',str(port),str(ip)])
     a=os.popen(tcping)
     a=a.read().split("\n")
     a=a[-3].split("=")[-1]

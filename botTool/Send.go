@@ -43,10 +43,10 @@ func randStr(n int) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
-func SendMessage(update *tgbotapi.Update, text *string, reply bool, mode ...string) (*tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, *text)
+func SendMessage(message *tgbotapi.Message, text string, reply bool, mode ...string) (*tgbotapi.Message, error) {
+	msg := tgbotapi.NewMessage(message.Chat.ID, text)
 	if reply {
-		msg.ReplyToMessageID = update.Message.MessageID
+		msg.ReplyToMessageID = message.MessageID
 	}
 	if len(mode) > 0 {
 		msg.ParseMode = mode[0]
@@ -55,10 +55,10 @@ func SendMessage(update *tgbotapi.Update, text *string, reply bool, mode ...stri
 	return &msgConfig, error
 }
 
-func Edit(msg *tgbotapi.Message, text *string, mode ...string) (*tgbotapi.Message, error) {
+func Edit(msg *tgbotapi.Message, text string, mode ...string) (*tgbotapi.Message, error) {
 	editMessage := tgbotapi.EditMessageTextConfig{
 		BaseEdit:              tgbotapi.BaseEdit{ChatID: msg.Chat.ID, MessageID: msg.MessageID},
-		Text:                  *text,
+		Text:                  text,
 		Entities:              []tgbotapi.MessageEntity{},
 		DisableWebPagePreview: false,
 	}
@@ -69,7 +69,7 @@ func Edit(msg *tgbotapi.Message, text *string, mode ...string) (*tgbotapi.Messag
 	return &msgConfig, error
 }
 
-func SendDocument(update *tgbotapi.Update, text []byte, name string, reply bool, caption ...string) (*tgbotapi.Message, error) {
+func SendDocument(message *tgbotapi.Message, text []byte, name string, reply bool, caption ...string) (*tgbotapi.Message, error) {
 	// newName := randStr(10) + name
 	// file, err := os.OpenFile(newName, os.O_WRONLY|os.O_CREATE, 0666)
 	// if err != nil {
@@ -87,16 +87,16 @@ func SendDocument(update *tgbotapi.Update, text []byte, name string, reply bool,
 	// 	log.Println("文件打开失败", err)
 	// }
 	// updateFile := tgbotapi.FileReader{Name: name, Reader: f}
-	// document := tgbotapi.NewDocument(update.Message.Chat.ID, updateFile)
+	// document := tgbotapi.NewDocument(message.Chat.ID, updateFile)
 
 	// // log.Println(document.Caption)
 	config := tgbotapi.FileBytes{
 		Name:  name,
 		Bytes: text,
 	}
-	document := tgbotapi.NewDocument(update.Message.Chat.ID, config)
+	document := tgbotapi.NewDocument(message.Chat.ID, config)
 	if reply {
-		document.ReplyToMessageID = update.Message.MessageID
+		document.ReplyToMessageID = message.MessageID
 	}
 	if len(caption) > 0 {
 		document.Caption = caption[0]
@@ -120,4 +120,19 @@ func SendPhoto(chatId string, data []byte) {
 func SendForward(chatId int64, fromChatID int64, msgID int) {
 	forward := tgbotapi.NewForward(chatId, fromChatID, msgID)
 	Bot.Send(forward)
+}
+
+func SendFile(message *tgbotapi.Message, url string, reply bool, caption ...string) {
+	file := tgbotapi.FileURL(url)
+	photo := tgbotapi.NewPhoto(message.Chat.ID, file)
+	if reply {
+		photo.ReplyToMessageID = message.MessageID
+	}
+	if len(caption) == 1 {
+		photo.Caption = caption[0]
+	} else if len(caption) == 2 {
+		photo.Caption = caption[0]
+		photo.ParseMode = caption[1]
+	}
+	Bot.Send(photo)
 }

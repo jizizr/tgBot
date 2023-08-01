@@ -11,22 +11,22 @@ import (
 
 var guozaoMatch = regexp.MustCompile(`^/[a-zA-Z0-9_@/]*$`)
 
-func Guozao(update *tgbotapi.Update) {
-	if update.Message == nil || update.Message.Text == "" {
+func Guozao(update *tgbotapi.Update, message *tgbotapi.Message) {
+	if message == nil || message.Text == "" {
 		return
 	}
-	arr := strings.Split(update.Message.Text, " ")
+	arr := strings.Split(message.Text, " ")
 	if guozaoMatch.MatchString(arr[0]) {
 		return
 	}
 	var str string
 	var player1, player2 string
 
-	player1 = getAt(update)
-	if update.Message.ReplyToMessage != nil {
-		player2 = getReplyAt(update)
+	player1 = getAt(update, message)
+	if message.ReplyToMessage != nil {
+		player2 = getReplyAt(update, message)
 	} else {
-		player2 = fmt.Sprintf("[自己](tg://user?id=%d)", update.Message.From.ID)
+		player2 = fmt.Sprintf("[自己](tg://user?id=%d)", message.From.ID)
 	}
 
 	if len(arr) == 1 {
@@ -35,5 +35,5 @@ func Guozao(update *tgbotapi.Update) {
 		str = fmt.Sprintf("%s %s %s %s！", player1, arr[0][1:], player2, strings.Join(arr[1:], " "))
 	}
 	str = strings.Replace(strings.Replace(str, "$from", player1, -1), "$to", player2, -1)
-	botTool.SendMessage(update, &str, true, "Markdown")
+	botTool.SendMessage(message, str, true, "Markdown")
 }

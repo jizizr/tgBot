@@ -6,11 +6,15 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"regexp"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	// _ "github.com/go-sql-driver/mysql"
 )
+
+var timerule = regexp.MustCompile(`\d\d:\d\d (A|P)M UTC\+\d`)
 
 type database struct {
 	Db *sql.DB
@@ -27,6 +31,9 @@ func InitMysql(user, token, table string) (db *database) {
 	if err != nil {
 		log.Println(err)
 	}
+	dbv.SetMaxOpenConns(500)
+	dbv.SetMaxIdleConns(50)
+	dbv.SetConnMaxLifetime(1 * time.Hour)
 	db = &database{dbv}
 	return
 }
@@ -44,8 +51,21 @@ func (db *database) CreateUserTable(userId string) {
 	}
 }
 
+func (db *database) CreateGroupRules(chatId int64) {
+	sqlStr := fmt.Sprintf("CREATE TABLE `%d` (regexpStr VARCHAR(2000),replyStr TEXT(20000)) CHARSET=utf8mb4", chatId)
+	result, err := db.Db.Exec(sqlStr)
+	if err != nil {
+		log.Printf("%s when Exec Database in GroupRules", err)
+		return
+	}
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Printf("%s when RowsAffected in GroupRules", err)
+	}
+}
+
 func (db *database) CreateUserConfig(userId string) {
-	sqlStr := fmt.Sprintf("CREATE TABLE `%s` (userId CHAR(16) UNIQUE,username VARCHAR(200),name VARCHAR(200),time datetime) CHARSET=utf8mb4", userId)
+	sqlStr := fmt.Sprintf("CREATE TABLE `%s` (userId CHAR(16) UNIQUE,username VARCHAR(200),name VARCHAR(2000),time datetime) CHARSET=utf8mb4", userId)
 	result, err := db.Db.Exec(sqlStr)
 	if err != nil {
 		log.Printf("%s when Exec Database in User", err)
@@ -61,7 +81,7 @@ func (db *database) CreateChatTable(chatId string) {
 	sqlStr := fmt.Sprintf("CREATE TABLE `%s`(groupData CHAR(30) UNIQUE,times SMALLINT) CHARSET=utf8mb4", chatId)
 	result, err := db.Db.Exec(sqlStr)
 	if err != nil {
-		log.Printf("%s when Exec Database in Chat", err)
+		// log.Printf("%s when Exec Database in Chat", err)
 		return
 	}
 	_, err = result.RowsAffected()
@@ -78,6 +98,7 @@ func (db *database) TableInfo(groups *[]string) {
 		log.Println("Table info", err)
 		return
 	}
+	defer rows.Close()
 	for rows.Next() {
 		rows.Scan(&data)
 		for i, v := range data {
@@ -87,7 +108,6 @@ func (db *database) TableInfo(groups *[]string) {
 			}
 		}
 	}
-	// return
 }
 
 func (db *database) AddMessage(chatId string, message string) {
@@ -109,8 +129,30 @@ func (db *database) AddMessage(chatId string, message string) {
 				return
 			}
 		} else {
-			log.Println("AddMessgae", message)
+			log.Println("Addmessage", message)
 			return
+		}
+	}
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Printf("%s when RowsAffected in Group", err)
+	}
+}
+
+func (db *database) AddRules(chatId int64, regexpStr string, replyStr string) {
+	sqlStr := fmt.Sprintf("insert into `%d` (regexpStr,replyStr) values(?,?)", chatId)
+	result, err := db.Db.Exec(sqlStr, regexpStr, replyStr)
+	// log.Println(sqlStr)
+	if err != nil {
+		driverErr, _ := err.(*mysql.MySQLError)
+		if driverErr.Number == 1146 {
+			db.CreateGroupRules(chatId)
+			result, err = db.Db.Exec(sqlStr, regexpStr, replyStr)
+			if err != nil {
+				log.Println(err, regexpStr, replyStr)
+			}
+		} else {
+			log.Println("regexpStr,replyStr", regexpStr, replyStr)
 		}
 	}
 	_, err = result.RowsAffected()
@@ -126,9 +168,6 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 		}
 	}()
 	chatId = chatId + "User"
-	if len(name) > 200 {
-		name = name[:198]
-	}
 	sqlStr := fmt.Sprintf("insert into `%s` (userId,times,name) values(?,1,?) on DUPLICATE key update times=times+1", chatId)
 	result, err := db.Db.Exec(sqlStr, userId, name)
 	// log.Println(sqlStr)
@@ -141,7 +180,7 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 				log.Println(err, name)
 			}
 		} else {
-			log.Println("name:", name)
+			log.Println("name:", len(name))
 		}
 	}
 	_, err = result.RowsAffected()
@@ -150,7 +189,7 @@ func (db *database) AddUser(chatId string, userId string, name string) {
 	}
 }
 
-func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string, groupname string, user string, username string, nickname string) {
+func (db *database) AddGroup(update *tgbotapi.Update, message *tgbotapi.Message, chatId string, name string, groupname string, user string, username string, nickname string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("AddGroup", err)
@@ -167,20 +206,22 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 		log.Println(username)
 		err = nil
 	}
-	sqlStr = "INSERT INTO `config`(`chatId`,`username`, `groupname`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`=?,`groupname`=?"
-	result, err = db.Db.Exec(sqlStr, chatId, name, groupname, name, groupname)
-	// log.Println(sqlStr)
-	if err != nil {
-		log.Println(err)
-		log.Println(chatId)
-		log.Println(name)
-		log.Println(groupname)
-		err = nil
-	}
-	_, err = result.RowsAffected()
+	if message.Text == "" {
+		sqlStr = "INSERT INTO `config`(`chatId`,`username`, `groupname`) VALUES(?,?,?) ON DUPLICATE KEY UPDATE `username`=?,`groupname`=?"
+		result, err = db.Db.Exec(sqlStr, chatId, name, groupname, name, groupname)
+		// log.Println(sqlStr)
+		if err != nil {
+			log.Println(err)
+			log.Println(chatId)
+			log.Println(len(name))
+			log.Println(groupname)
+			err = nil
+		}
+		_, err = result.RowsAffected()
 
-	if err != nil {
-		log.Printf("%s when RowsAffected in config", err)
+		if err != nil {
+			log.Printf("%s when RowsAffected in config", err)
+		}
 	}
 	sqlStr = fmt.Sprintf("select `name`,`username` from `%s` where userid=?", chatId)
 	row := db.Db.QueryRow(sqlStr, user)
@@ -214,7 +255,9 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 			return
 		}
 		msg = fmt.Sprintf("User: [%s](tg://user?id=%s)\n\n%s", user, user, msg)
-		botTool.SendMessage(update, &msg, false, "Markdown")
+		if !timerule.MatchString(nickname) {
+			botTool.SendMessage(message, msg, false, "Markdown")
+		}
 	}
 	sqlStr = fmt.Sprintf("insert into `%s` (`userId`,`username`,`name`,`time`) values(?,?,?,Now()) ON DUPLICATE KEY UPDATE `username`=?,`name`=?,`time`=Now()", chatId)
 	result, _ = db.Db.Exec(sqlStr, user, username, nickname, username, nickname)
@@ -226,13 +269,13 @@ func (db *database) AddGroup(update *tgbotapi.Update, chatId string, name string
 	}
 }
 
-func (db *database) GetAllWords(chatId *string) (result map[string]int) {
+func (db *database) GetAllWords(chatId string) (result map[string]int) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("GetAllWord", err)
 		}
 	}()
-	strSql := fmt.Sprintf("select groupData,times from `%s` order by `times` desc limit 0,150", *chatId)
+	strSql := fmt.Sprintf("select groupData,times from `%s` order by `times` desc limit 0,150", chatId)
 	rows, err := db.Db.Query(strSql)
 	if err != nil {
 		driverErr, _ := err.(*mysql.MySQLError)
@@ -241,6 +284,7 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 		}
 		return
 	}
+	defer rows.Close()
 	result = make(map[string]int)
 	for rows.Next() {
 		var data string
@@ -252,18 +296,19 @@ func (db *database) GetAllWords(chatId *string) (result map[string]int) {
 	return
 }
 
-func (db *database) GetAllUsers(chatId *string) (result [2][]string) {
+func (db *database) GetAllUsers(chatId string) (result [2][]string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("getallUser", err)
 		}
 	}()
-	strSql := fmt.Sprintf("select times,name from `%sUser` order by times desc limit 5", *chatId)
+	strSql := fmt.Sprintf("select times,name from `%sUser` order by times desc limit 5", chatId)
 	rows, err := db.Db.Query(strSql)
 	if err != nil {
 		log.Println("GetallUser", err)
 		return
 	}
+	defer rows.Close()
 	// result = make([][]string,0)
 	for rows.Next() {
 		// var data string
@@ -273,6 +318,37 @@ func (db *database) GetAllUsers(chatId *string) (result [2][]string) {
 		// log.Println(data, times, name)
 		result[0] = append(result[0], times)
 		result[1] = append(result[1], name)
+	}
+	// log.Println(result)
+	return
+}
+
+func (db *database) GetAllRules(chatId int64) (result [][2]string) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("getallUser", err)
+		}
+	}()
+	strSql := fmt.Sprintf("select * from `%d`", chatId)
+	rows, err := db.Db.Query(strSql)
+	if err != nil {
+		driverErr, _ := err.(*mysql.MySQLError)
+		if driverErr.Number == 1146 {
+			return nil
+		} else {
+			log.Println("GetallRulers", err)
+		}
+		return
+	}
+	defer rows.Close()
+	// result = make([][]string,0)
+	for rows.Next() {
+		// var data string
+		var regexpStr string
+		var replyStr string
+		rows.Scan(&regexpStr, &replyStr)
+		// log.Println(data, times, name)
+		result = append(result, [2]string{regexpStr, replyStr})
 	}
 	// log.Println(result)
 	return
@@ -308,6 +384,7 @@ func (db *database) Clear() {
 		log.Println("clear", err)
 		return
 	}
+	defer rows.Close()
 	for rows.Next() {
 		rows.Scan(&data)
 		strSql := fmt.Sprintf("DROP TABLE `%s`", data)

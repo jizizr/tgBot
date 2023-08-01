@@ -5,6 +5,7 @@ import (
 	"bot/dbManager"
 	group "bot/wdCloud"
 	"fmt"
+	"os"
 	"unicode/utf8"
 
 	// "regexp"
@@ -13,36 +14,43 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-ego/gse"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/jizizr/gojieba"
 )
 
 // var re3, _ = regexp.Compile(`[\p{P}\s]*`)
-var jieba = gojieba.NewJieba()
-var db = dbManager.InitMysql("data", DB_TOKEN, "data")
-var cx = map[string]struct{}{"eng": {}, "v": {}, "l": {}, "x": {}, "n": {}, "nr": {}, "a": {}, "vd": {}, "nz": {}, "PER": {}, "f": {}, "ns": {}, "LOC": {}, "s": {}, "nt": {}, "ORG": {}, "nw": {}, "vn": {}}
+var jieba gse.Segmenter
 
-func TextManager(update *tgbotapi.Update) {
-	if update.Message.From.IsBot || update.Message.From.ID == 777000 || update.Message.IsCommand() {
+func init() {
+	if len(os.Args) == 1 {
+		jieba.LoadDict("./source/s_1.txt,./source/t_1.txt")
+	}
+}
+
+var db = dbManager.InitMysql("data", DB_TOKEN, "data")
+var cx = map[string]struct{}{"v": {}, "l": {}, "n": {}, "nr": {}, "a": {}, "vd": {}, "nz": {}, "PER": {}, "f": {}, "ns": {}, "LOC": {}, "s": {}, "nt": {}, "ORG": {}, "nw": {}, "vn": {}}
+
+func TextManager(update *tgbotapi.Update, message *tgbotapi.Message) {
+	if message.From.IsBot || message.From.ID == 777000 || message.IsCommand() || update.EditedMessage != nil {
 		return
 	}
-	text := update.Message.Text
-	userId := fmt.Sprint(update.Message.From.ID)
-	chatId := fmt.Sprint(update.Message.Chat.ID)
-	name := botTool.GetName(update)
+	text := message.Text
+	userId := fmt.Sprint(message.From.ID)
+	chatId := fmt.Sprint(message.Chat.ID)
+	name := botTool.GetName(update, message)
 	db.AddUser(chatId, userId, name)
 	// text = re3.ReplaceAllString(text, "")
-	// config.AddGroup(chatId, update.Message.Chat.UserName, update.Message.Chat.Title,fmt.Sprint(update.Message.From.ID),update.Message.From.UserName,getName(update))
+	// config.AddGroup(chatId, message.Chat.UserName, message.Chat.Title,fmt.Sprint(message.From.ID),message.From.UserName,getName(update))
 	if utf8.RuneCountInString(text) < 2 {
 		return
-	} else if utf8.RuneCountInString(text) < 7 {
-		text = strings.Join(jieba.CutForSearch(text, true), " ")
 	}
-	word := jieba.Tag(text)
+	// } else if utf8.RuneCountInString(text) < 7 {
+	// 	text = strings.Join(jieba.CutForSearch(text, true), " ")
+	// }
+	word := jieba.Pos(text)
 	for _, v := range word {
-		w := strings.Split(v, "/")
-		if utf8.RuneCountInString(w[0]) > 1 && len(w[0]) < 30 && botTool.Contains(cx, w[1]) {
-			go db.AddMessage(chatId, w[0])
+		if utf8.RuneCountInString(v.Text) > 1 && len(v.Text) < 30 && botTool.Contains(cx, v.Pos) {
+			go db.AddMessage(chatId, v.Text)
 		}
 	}
 
@@ -50,7 +58,7 @@ func TextManager(update *tgbotapi.Update) {
 
 func getPic(chatId string, name string) {
 	chatId2 := fmt.Sprintf("%sGroup", chatId)
-	result := db.GetAllWords(&chatId2)
+	result := db.GetAllWords(chatId2)
 	if result == nil {
 		str := "群里太冷清了,或Allen没有读取消息权限."
 		cId, _ := strconv.ParseInt(chatId, 10, 64)
@@ -58,10 +66,11 @@ func getPic(chatId string, name string) {
 		botTool.Bot.Send(msg)
 		return
 	}
-	botTool.SendPhoto(chatId, group.Rank(result, name))
+	botTool.SendPhoto(chatId, group.Rank(result, chatId))
 }
 
 func Clear() {
+	ScheduleTask()
 	db.Clear()
 }
 
@@ -75,7 +84,7 @@ func ScheduleTask() {
 }
 
 func getUsers(chatId string) {
-	result := db.GetAllUsers(&chatId)
+	result := db.GetAllUsers(chatId)
 	users := result[1]
 	times := result[0]
 	top5Users := make([]string, 0)

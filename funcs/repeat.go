@@ -11,7 +11,7 @@ import (
 var previousMessage sync.Map
 
 type messageConfig struct {
-	message *string
+	message string
 	userID  int64
 	msgID   int
 }
@@ -19,7 +19,7 @@ type messageConfig struct {
 func search(mc *list.List, msg *messageConfig) bool {
 	for e := mc.Front(); e != nil; e = e.Next() {
 		v := e.Value.(*messageConfig)
-		if *v.message == *msg.message {
+		if v.message == msg.message {
 			mc.Remove(e)
 			if v.userID != msg.userID {
 				return true
@@ -29,24 +29,24 @@ func search(mc *list.List, msg *messageConfig) bool {
 	return false
 }
 
-func Repeat(update *tgbotapi.Update) {
-	var str *string
-	if update.Message.Text != "" {
-		str = &update.Message.Text
-	} else if update.Message.Sticker != nil {
-		str = &update.Message.Sticker.FileUniqueID
-	} else if update.Message.Caption != "" {
-		str = &update.Message.Caption
+func Repeat(update *tgbotapi.Update, message *tgbotapi.Message) {
+	var str string
+	if message.Text != "" {
+		str = message.Text
+	} else if message.Sticker != nil {
+		str = message.Sticker.FileUniqueID
+	} else if message.Caption != "" {
+		str = message.Caption
 	} else {
 		return
 	}
-	updateMsg := &messageConfig{message: str, userID: update.Message.From.ID, msgID: update.Message.MessageID}
-	v, ok := previousMessage.Load(update.Message.Chat.ID)
+	updateMsg := &messageConfig{message: str, userID: message.From.ID, msgID: message.MessageID}
+	v, ok := previousMessage.Load(message.Chat.ID)
 	if ok {
 		mc := v.(*list.List)
 		ok := search(mc, updateMsg)
 		if ok {
-			botTool.SendForward(update.Message.Chat.ID, update.Message.Chat.ID, updateMsg.msgID)
+			botTool.SendForward(message.Chat.ID, message.Chat.ID, updateMsg.msgID)
 		} else {
 			mc.PushBack(updateMsg)
 			if mc.Len() > 3 {
@@ -56,6 +56,6 @@ func Repeat(update *tgbotapi.Update) {
 	} else {
 		mc := list.New()
 		mc.PushBack(updateMsg)
-		previousMessage.Store(update.Message.Chat.ID, mc)
+		previousMessage.Store(message.Chat.ID, mc)
 	}
 }

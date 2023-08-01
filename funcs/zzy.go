@@ -15,17 +15,17 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func Zzy(update *tgbotapi.Update) {
+func Zzy(update *tgbotapi.Update, message *tgbotapi.Message) {
 	str := "Allen 闻到了野生寄远的气息！\n寄远兄，你别自爆啦！"
-	botTool.SendMessage(update, &str, true)
+	botTool.SendMessage(message, str, true)
 }
 
-func Dao(update *tgbotapi.Update) {
+func Dao(update *tgbotapi.Update, message *tgbotapi.Message) {
 	var str string
 	if rand.Intn(2) == 0 {
 		str = fmt.Sprintf(baseDao, "导了", "掌声鼓励")
 	} else {
 		str = fmt.Sprintf(baseDao, "没导", "快导快导")
 	}
-	botTool.SendMessage(update, &str, true)
+	botTool.SendMessage(message, str, true)
 }

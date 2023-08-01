@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"bot/botTool"
+	. "bot/config"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -76,16 +78,27 @@ func (t Translator) Translate(text, sourceLang, targetLang string) (string, stri
 	return "err", "", errors.New("translation not found")
 }
 
-func Translate(update *tgbotapi.Update) {
+func Translator2(text string) string {
+	url1 := fmt.Sprintf("http://api.a20safe.com/api.php?api=30&key=%s&text=%s", API_TOKEN, url.QueryEscape(text))
+	// fmt.Println(url1)
+	tRaw := getToMap(url1)
+	if tRaw["code"].(float64) != 0 {
+		return ""
+	}
+	t := tRaw["data"].([]interface{})[0].(map[string]interface{})["result"].(string)
+	return strings.ReplaceAll(t, "<br>", "\n")
+}
+
+func Translate(update *tgbotapi.Update, message *tgbotapi.Message) {
 	str := "正在翻译..."
-	msg, _ := botTool.SendMessage(update, &str, true)
+	msg, _ := botTool.SendMessage(message, str, true)
 	var text string
 	var lan string
-	user := strings.Split(update.Message.Text, " ")
-	if update.Message.ReplyToMessage != nil {
-		text = update.Message.ReplyToMessage.Text
+	user := strings.Split(message.Text, " ")
+	if message.ReplyToMessage != nil {
+		text = message.ReplyToMessage.Text
 		if text == "" {
-			text = update.Message.ReplyToMessage.Caption
+			text = message.ReplyToMessage.Caption
 		}
 		if len(user) > 1 {
 			lan = user[1]
@@ -96,7 +109,7 @@ func Translate(update *tgbotapi.Update) {
 	if text == "" {
 		if len(user) == 1 {
 			str := "请输入要翻译的内容:\nUsage:()内为可选参数[]为必选参数\n1.回复需要翻译的语句：\n/translate (目标语言)\n2.翻译自己的句子\n/translate [文本内容] (目标语言)\n"
-			botTool.Edit(msg, &str)
+			botTool.Edit(msg, str)
 			return
 		} else {
 			if botTool.Contains(lantype, user[len(user)-1]) {
@@ -108,11 +121,36 @@ func Translate(update *tgbotapi.Update) {
 			}
 		}
 	}
-	bodyStr, lang, _ := t.Translate(text, "auto", lan)
-	if bodyStr == "" {
-		lan = "en"
-		bodyStr, lang, _ = t.Translate(text, "auto", lan)
-	}
-	bodyStr = fmt.Sprintf("*Translate from*  `%s`  *to*  `%s`\n*Result:*\n`%s`", lang, lan, bodyStr)
-	botTool.Edit(msg, &bodyStr, "Markdown")
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				return
+			}
+		}()
+		defer wg.Done()
+		bodyStr, lang, _ := t.Translate(text, "auto", lan)
+		if bodyStr == "" {
+			lan = "en"
+			bodyStr, lang, _ = t.Translate(text, "auto", lan)
+		}
+		bodyStr = fmt.Sprintf("接口1:\n*Translate from*  `%s`  *to*  `%s`\n*Result:*\n`%s`", lang, lan, bodyStr)
+		botTool.Edit(msg, bodyStr, "Markdown")
+	}()
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				return
+			}
+		}()
+		defer wg.Done()
+		bodyStr := Translator2(text)
+		if bodyStr == "" {
+			return
+		}
+		bodyStr = fmt.Sprintf("接口2:\n*Result:*\n`%s`", bodyStr)
+		botTool.SendMessage(message, bodyStr, true, "Markdown")
+	}()
+	wg.Wait()
 }

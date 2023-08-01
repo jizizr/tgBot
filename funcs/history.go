@@ -11,8 +11,8 @@ import (
 
 var hisMatch = regexp.MustCompile(`</em>\.(.*?)</dt>`)
 
-func History(update *tgbotapi.Update) {
-	arr := strings.Split(update.Message.Text, " ")
+func History(update *tgbotapi.Update, message *tgbotapi.Message) {
+	arr := strings.Split(message.Text, " ")
 	var his []byte
 	if len(arr) == 1 {
 		getHistory(&his)
@@ -43,5 +43,5 @@ func History(update *tgbotapi.Update) {
 	if len(arr) == 3 && arr[1] == "06" && arr[2] == "04" {
 		str += "11. 1989年-中国发生天安门学生运动"
 	}
-	botTool.SendMessage(update, &str, true)
+	botTool.SendMessage(message, str, true)
 }

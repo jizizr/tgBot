@@ -12,11 +12,11 @@ func Contains(slice map[string]struct{}, item string) bool {
 	return ok
 }
 
-func BanMember(update *tgbotapi.Update, gid int64, uid int64, sec int64) error {
+func BanMember(update *tgbotapi.Update,message *tgbotapi.Message,uid int64,sec int64) error {
 	if sec <= 0 {
 		sec = 9999999999999
 	}
-	chatuserconfig := tgbotapi.ChatMemberConfig{ChatID: gid, UserID: uid}
+	chatuserconfig := tgbotapi.ChatMemberConfig{ChatID: message.Chat.ID, UserID: uid}
 	restricconfig := tgbotapi.RestrictChatMemberConfig{
 		ChatMemberConfig: chatuserconfig,
 		UntilDate:        time.Now().Unix() + sec,
@@ -31,13 +31,13 @@ func BanMember(update *tgbotapi.Update, gid int64, uid int64, sec int64) error {
 		} else {
 			str = "无权禁言！"
 		}
-		SendMessage(update, &str, true)
+		SendMessage(message ,str, true)
 	}
 	return err
 }
 
-func GetName(update *tgbotapi.Update) (name string) {
-	user := update.Message.From
+func GetName(update *tgbotapi.Update,message *tgbotapi.Message) (name string) {
+	user := message.From
 	name = user.FirstName + " " + user.LastName
 	if name != " " {
 		return
@@ -50,8 +50,8 @@ func GetName(update *tgbotapi.Update) (name string) {
 	return
 }
 
-func GetReplyName(update *tgbotapi.Update) (name string) {
-	user := update.Message.ReplyToMessage.From
+func GetReplyName(update *tgbotapi.Update,message *tgbotapi.Message) (name string) {
+	user := message.ReplyToMessage.From
 	name = user.FirstName + " " + user.LastName
 	if name != " " {
 		return
